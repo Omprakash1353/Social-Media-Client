@@ -11,7 +11,7 @@ export type useServerAuthType =
     })
   | null;
 
-export type useServerSessionType = {
+export type serverSessionType = {
   name: string;
   _id: string;
   email: string;

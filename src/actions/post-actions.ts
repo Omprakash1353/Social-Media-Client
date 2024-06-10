@@ -3,7 +3,7 @@
 import mongoose from "mongoose";
 
 import { getErrorMessage } from "@/helpers/errorMessageHandler";
-import { useServerSession } from "@/hooks/useServerSession";
+import { serverSession } from "@/hooks/useServerSession";
 import { getBlurImage } from "@/lib/blur-image";
 import { dbConnect } from "@/lib/dbConnection";
 import { PostModel } from "@/models/post.model";
@@ -15,7 +15,7 @@ export async function createPostAction(formData: FormData) {
   try {
     await dbConnect();
 
-    const session = await useServerSession();
+    const session = await serverSession();
     if (!session?.user._id)
       return {
         ok: false,
@@ -123,7 +123,7 @@ export async function createPostAction(formData: FormData) {
 export async function fetchMorePosts({ page = 1 }: { page?: number }) {
   await dbConnect();
 
-  const session = await useServerSession();
+  const session = await serverSession();
   if (!session?.user._id)
     return {
       ok: false,
@@ -145,7 +145,7 @@ export async function fetchMorePosts({ page = 1 }: { page?: number }) {
       posts: [],
     };
 
-  const posts = await PostModel.aggregate(postAggregate(page, 3))
+  const posts = await PostModel.aggregate(postAggregate(page, 3));
 
   return posts.length
     ? {

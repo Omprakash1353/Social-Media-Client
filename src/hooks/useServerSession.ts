@@ -7,6 +7,6 @@ import { useServerAuthType } from "@/types/server-components";
  * Function to get the server session asynchronously
  * @returns A promise resolving to a useServerAuthType
  */
-export async function useServerSession(): Promise<useServerAuthType> {
+export async function serverSession(): Promise<useServerAuthType> {
   return await getServerSession(authOptions);
 }

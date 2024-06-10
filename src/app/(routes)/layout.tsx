@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { useServerSession } from "@/hooks/useServerSession";
+import { serverSession } from "@/hooks/useServerSession";
 import { ResizableComponents } from "./_components/resizable-components";
 
 export default async function Layout({
@@ -9,7 +9,7 @@ export default async function Layout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await useServerSession();
+  const session = await serverSession();
 
   const layout = cookies().get("react-resizable-panels:layout");
 
