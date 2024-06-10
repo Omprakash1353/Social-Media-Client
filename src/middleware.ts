@@ -14,6 +14,8 @@ export async function middleware(req: NextRequest) {
 	const { nextUrl } = req;
 	const isLoggedIn = !!token;
 
+	console.log(token, nextUrl, isLoggedIn)
+
 	const isApiAuthRoute = nextUrl.pathname.startsWith(apiAuthPrefix);
 	const isPublicRoute = publicRoutes.includes(nextUrl.pathname);
 	const isAuthRoute = authRoutes.includes(nextUrl.pathname);
