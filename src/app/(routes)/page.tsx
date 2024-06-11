@@ -16,7 +16,7 @@ export default async function Page() {
     <div className="mr-5 flex w-full flex-col items-center justify-center gap-3">
       <Stories />
       <ScrollArea className="flex h-[1000px] flex-col items-center justify-center gap-y-3">
-        <PostsScroll posts={ParsedPosts} />
+        <PostsScroll initialPosts={ParsedPosts} />
         <div className="h-36" />
       </ScrollArea>
     </div>

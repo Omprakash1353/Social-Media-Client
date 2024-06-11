@@ -1,53 +1,64 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useInView } from "react-intersection-observer";
+import { useInfiniteQuery } from "@tanstack/react-query";
 
-import { fetchMorePosts } from "@/actions/post-actions";
 import { Icons } from "@/components/shared/icons";
 import { PostCard } from "@/components/specific/post-card";
 import { IPostStringified } from "@/types/types";
+import { fetchMorePosts } from "@/actions/post-actions";
 
 export function PostsScroll({
-  posts: initialPosts,
+  initialPosts,
 }: {
-  posts: IPostStringified[];
+  initialPosts: IPostStringified[];
 }) {
   const [ref, inView] = useInView();
-  const [page, setPage] = useState(1);
-  const [posts, setPosts] = useState(initialPosts);
 
-  const loadMorePosts = useCallback(async () => {
-    const next = page + 1;
-    const { ok, posts } = await fetchMorePosts({
-      page: next,
-    });
-    if (ok && posts.length) {
-      setPage(next);
-      setPosts((prevPosts) => [
-        ...(prevPosts.length ? prevPosts : []),
-        ...(posts as IPostStringified[]),
-      ]);
-    }
-  }, [posts]);
+  const fetchPosts = async ({ pageParam = 1 }: { pageParam?: number }) => {
+    const res = await fetchMorePosts({ page: pageParam });
+    return res;
+  };
+
+  const {
+    data,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ["posts"],
+    queryFn: fetchPosts,
+    initialPageParam: 2,
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.length ? allPages.length + 1 : undefined,
+    initialData: {
+      pageParams: [1],
+      pages: [initialPosts],
+    },
+  });
 
   useEffect(() => {
-    if (inView) {
-      loadMorePosts();
+    if (inView && hasNextPage) {
+      fetchNextPage();
     }
-  }, [inView]);
+  }, [inView, hasNextPage, fetchNextPage]);
 
   return (
     <>
-      {posts.map((e: IPostStringified) => (
-        <PostCard key={e._id} postData={e} />
-      ))}
+      {data.pages.map((page: IPostStringified[]) =>
+        page.map((post: IPostStringified) => (
+          <PostCard key={post._id} postData={post} />
+        )),
+      )}
 
       <div
         className="flex h-20 w-full items-center justify-center pb-32 pt-10"
         ref={ref}
       >
-        <Icons.spinner className="mr-2 h-10 w-10 animate-spin" />
+        {isFetchingNextPage && (
+          <Icons.spinner className="mr-2 h-10 w-10 animate-spin" />
+        )}
       </div>
     </>
   );

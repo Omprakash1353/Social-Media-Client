@@ -7,7 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 import AuthProvider from "@/context/auth-provider";
 import { ThemeProvider } from "@/context/theme-provider";
 // import { SocketProvider } from "@/context/socket-provider";
-// import QueryProvider from "@/context/query-provider";
+import { QueryProvider } from "@/context/query-provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,17 +24,19 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-          <NextTopLoader color="red" showSpinner={false} speed={200} />
+        <NextTopLoader color="red" showSpinner={false} speed={200} />
         <AuthProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            {children}
-            <Toaster />
-          </ThemeProvider>
+          <QueryProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              {children}
+              <Toaster />
+            </ThemeProvider>
+          </QueryProvider>
         </AuthProvider>
       </body>
     </html>

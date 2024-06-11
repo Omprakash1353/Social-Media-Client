@@ -10,6 +10,7 @@ import { PostModel } from "@/models/post.model";
 import { UserModel } from "@/models/user.model";
 import { UploadImage } from "@/services/cloudinary";
 import { postAggregate } from "@/lib/aggregates";
+import { IPostStringified } from "@/types/types";
 
 export async function createPostAction(formData: FormData) {
   try {
@@ -120,48 +121,20 @@ export async function createPostAction(formData: FormData) {
   }
 }
 
-export async function fetchMorePosts({ page = 1 }: { page?: number }) {
+export async function fetchMorePosts({
+  page = 1,
+}: {
+  page?: number;
+}): Promise<IPostStringified[] | []> {
   await dbConnect();
 
   const session = await serverSession();
-  if (!session?.user._id)
-    return {
-      ok: false,
-      success: false,
-      status: 403,
-      error: "Unauthorized",
-      message: "",
-      posts: [],
-    };
+  if (!session?.user._id) return [];
 
   const user = await UserModel.findById(session?.user._id);
-  if (!user)
-    return {
-      ok: false,
-      success: false,
-      status: 403,
-      error: "Unauthorized",
-      message: "",
-      posts: [],
-    };
+  if (!user) return [];
 
   const posts = await PostModel.aggregate(postAggregate(page, 3));
 
-  return posts.length
-    ? {
-        ok: true,
-        success: true,
-        status: 200,
-        error: "",
-        message: "Request fullfilled successfully",
-        posts: JSON.parse(JSON.stringify(posts)),
-      }
-    : {
-        ok: true,
-        success: true,
-        status: 200,
-        error: "",
-        message: "You reached the end | No more posts available",
-        posts: [],
-      };
+  return posts.length ? JSON.parse(JSON.stringify(posts)) : [];
 }
