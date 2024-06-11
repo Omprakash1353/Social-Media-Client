@@ -2,8 +2,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { dbConnect } from "@/lib/dbConnection";
 import { PostModel } from "@/models/post.model";
 import { IPostStringified } from "@/types/types";
-import { PostsScroll } from "./_components/posts";
-import { Stories } from "./_components/stories";
+import { PostsScroll } from "../_components/posts";
+import { Stories } from "../_components/stories";
 import { postAggregate } from "@/lib/aggregates";
 
 export default async function Page() {

@@ -2,7 +2,6 @@
 
 import { Searchbar } from "@/components/shared/searchbar";
 import { Sidebar } from "@/components/shared/sidebar";
-import { SuggestionBar } from "@/components/shared/suggestion-bar";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -37,7 +36,7 @@ export function ResizableComponents({
           collapsedSize={navCollapsedSize}
           collapsible={true}
           minSize={15}
-          maxSize={20}
+          maxSize={15}
         >
           <Sidebar myProfileId={myProfileId} />
         </ResizablePanel>
@@ -45,14 +44,6 @@ export function ResizableComponents({
         <ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>
           <Searchbar />
           {children}
-        </ResizablePanel>
-        <ResizableHandle withHandle />
-        <ResizablePanel
-          minSize={20}
-          maxSize={25}
-          defaultSize={defaultLayout[2]}
-        >
-          <SuggestionBar />
         </ResizablePanel>
       </ResizablePanelGroup>
     </TooltipProvider>
