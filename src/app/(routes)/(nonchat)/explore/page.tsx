@@ -8,7 +8,7 @@ export default async function Page() {
   await dbConnect();
   const posts = await PostModel.aggregate(postExploreAggregate(1, 12));
 
-  // const parsedPosts = JSON.parse(JSON.stringify(posts));
+  const parsedPosts = JSON.parse(JSON.stringify(posts));
 
   // if (!parsedPosts.length)
   //   return (
