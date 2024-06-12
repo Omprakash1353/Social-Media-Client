@@ -61,19 +61,19 @@ export function PostCard({ postData }: { postData: IPostStringified }) {
     <div className="post-card m-5">
       <div className="flex justify-between">
         <div className="flex items-center gap-3">
-          <Link href={`/${postData.user.username}`}>
+          <Link href={`/${postData?.user?.username}`}>
             <Avatar>
               <AvatarImage src="/avatars/03.png" />
               <AvatarFallback>
-                {postData.user.username.toUpperCase().substring(0, 2)}
+                {postData?.user?.username.toUpperCase().substring(0, 2)}
               </AvatarFallback>
             </Avatar>
           </Link>
 
           <div className="flex flex-col">
             <p className="text-base">
-              <Link href={`/${postData.user.username}`}>
-                {postData.user.username}{" "}
+              <Link href={`/${postData?.user?.username}`}>
+                {postData?.user?.username}{" "}
               </Link>
               • <span className="text-sm text-stone-600">{pastTime} ago</span>
             </p>
@@ -86,7 +86,7 @@ export function PostCard({ postData }: { postData: IPostStringified }) {
         </div>
         <PostDropdown
           post_id={postData._id}
-          isOwnersPost={session?.user._id === postData.user._id}
+          isOwnersPost={session?.user._id === postData?.user?._id}
         />
       </div>
 
