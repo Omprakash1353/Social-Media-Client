@@ -8,19 +8,19 @@ export default async function Page() {
   await dbConnect();
   const posts = await PostModel.aggregate(postExploreAggregate(1, 12));
 
-  const parsedPosts = JSON.parse(JSON.stringify(posts));
+  // const parsedPosts = JSON.parse(JSON.stringify(posts));
 
-  if (!parsedPosts.length)
-    return (
-      <div className="h-full w-full p-10">
-        Sorry looks like we doesn't have enough data
-      </div>
-    );
+  // if (!parsedPosts.length)
+  //   return (
+  //     <div className="h-full w-full p-10">
+  //       Sorry looks like we doesn't have enough data
+  //     </div>
+  //   );
 
   return (
     <div className="h-full w-full p-10">
       <div className="grid grid-cols-3 gap-4">
-        <InfiniteExploreScroll initialPosts={parsedPosts} />
+        {/* <InfiniteExploreScroll initialPosts={parsedPosts} /> */}
       </div>
     </div>
   );
