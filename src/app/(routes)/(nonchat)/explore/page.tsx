@@ -13,15 +13,15 @@ export default async function Page() {
   if (!parsedPosts.length)
     return (
       <div className="h-full w-full p-10">
-        Sorry looks like we doesn't have enough data
+        Sorry looks like we doesn&apos;t have enough data
       </div>
     );
-
-  return (
-    <div className="h-full w-full p-10">
-      <div className="grid grid-cols-3 gap-4">
-        {/* <InfiniteExploreScroll initialPosts={parsedPosts} /> */}
+  else
+    return (
+      <div className="h-full w-full p-10">
+        <div className="grid grid-cols-3 gap-4">
+          <InfiniteExploreScroll initialPosts={parsedPosts} />
+        </div>
       </div>
-    </div>
-  );
+    );
 }
