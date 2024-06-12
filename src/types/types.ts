@@ -5,7 +5,7 @@ export type IPostStringified = Omit<
   "likes" | "saved" | "tagged" | "comments"
 > & {
   _id: string;
-  user?: {
+  user: {
     _id: string;
     name: string;
     email: string;
