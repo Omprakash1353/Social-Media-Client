@@ -15,7 +15,7 @@ export default async function Layout({
 
   const defaultLayout = layout
     ? JSON.parse(layout.value)
-    : [19.4852941176, 32.3529411765, 48.1617647059];
+    : [20, 80];
 
   const navCollapsedSize = 4;
 

@@ -4,13 +4,13 @@ import mongoose from "mongoose";
 
 import { getErrorMessage } from "@/helpers/errorMessageHandler";
 import { serverSession } from "@/hooks/useServerSession";
+import { postExploreAggregate, postHomeAggregate } from "@/lib/aggregates";
 import { getBlurImage } from "@/lib/blur-image";
 import { dbConnect } from "@/lib/dbConnection";
 import { PostModel } from "@/models/post.model";
 import { UserModel } from "@/models/user.model";
 import { UploadImage } from "@/services/cloudinary";
-import { postAggregate } from "@/lib/aggregates";
-import { IPostStringified } from "@/types/types";
+import { IPostStringified, PostExplorerType } from "@/types/types";
 
 export async function createPostAction(formData: FormData) {
   try {
@@ -121,7 +121,7 @@ export async function createPostAction(formData: FormData) {
   }
 }
 
-export async function fetchMorePosts({
+export async function fetchMoreHomePosts({
   page = 1,
 }: {
   page?: number;
@@ -134,7 +134,29 @@ export async function fetchMorePosts({
   const user = await UserModel.findById(session?.user._id);
   if (!user) return [];
 
-  const posts = await PostModel.aggregate(postAggregate(page, 3));
+  const posts = await PostModel.aggregate(
+    postHomeAggregate(page, 3, new mongoose.Types.ObjectId(session?.user._id)),
+  );
+
+  return posts.length ? JSON.parse(JSON.stringify(posts)) : [];
+}
+
+export async function fetchMoreExplorePosts({
+  page = 1,
+}: {
+  page?: number;
+}): Promise<PostExplorerType[] | []> {
+  await dbConnect();
+
+  const session = await serverSession();
+  if (!session?.user._id) return [];
+
+  const user = await UserModel.findById(session?.user._id);
+  if (!user) return [];
+
+  // TODO: In sorting the data is changing random everytime without refresh
+  const posts = await PostModel.aggregate(postExploreAggregate(page, 12));
+  // .sort(() => Math.random() - 0.5);
 
   return posts.length ? JSON.parse(JSON.stringify(posts)) : [];
 }

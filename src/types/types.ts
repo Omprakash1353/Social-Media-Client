@@ -5,7 +5,7 @@ export type IPostStringified = Omit<
   "likes" | "saved" | "tagged" | "comments"
 > & {
   _id: string;
-  user: {
+  user?: {
     _id: string;
     name: string;
     email: string;
@@ -20,4 +20,15 @@ export type IPostStringified = Omit<
     children: string[];
     content: string;
   }[];
+};
+
+export type PostExplorerType = {
+  post_Type: string;
+  media: {
+    secure_url: string;
+    asset_id: string;
+    blur_url: string;
+    public_id: string;
+  };
+  createdAt: Date;
 };

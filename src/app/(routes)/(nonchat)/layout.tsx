@@ -11,7 +11,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       direction="horizontal"
       className="min-h-[200px] max-w-full rounded-lg border"
     >
-      <ResizablePanel minSize={60} defaultSize={60}>
+      <ResizablePanel minSize={75} defaultSize={75}>
         {children}
       </ResizablePanel>
       <ResizableHandle withHandle />

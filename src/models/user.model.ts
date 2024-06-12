@@ -15,10 +15,11 @@ export interface User extends Document {
   account_Type: "PUBLIC" | "PRIVATE" | "BUSINESS";
   googleId?: string;
   githubId?: string;
+  followers?: (mongoose.Types.ObjectId | string)[];
+  followings?: (mongoose.Types.ObjectId | string)[];
   posts?: (mongoose.Types.ObjectId | string)[];
   searchHistory?: string[];
 }
-
 const schema = new Schema(
   {
     name: {
