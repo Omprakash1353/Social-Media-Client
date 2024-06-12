@@ -10,12 +10,12 @@ export default async function Page() {
 
   const parsedPosts = JSON.parse(JSON.stringify(posts));
 
-  // if (!parsedPosts.length)
-  //   return (
-  //     <div className="h-full w-full p-10">
-  //       Sorry looks like we doesn't have enough data
-  //     </div>
-  //   );
+  if (!parsedPosts.length)
+    return (
+      <div className="h-full w-full p-10">
+        Sorry looks like we doesn't have enough data
+      </div>
+    );
 
   return (
     <div className="h-full w-full p-10">
