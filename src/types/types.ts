@@ -32,3 +32,13 @@ export type PostExplorerType = {
   };
   createdAt: Date;
 };
+
+export type ProfilePostsType = {
+    _id: string;
+    media: {
+      secure_url: string;
+      blur_url: string;
+      asset_id: string;
+      _id: string;
+    };
+  };

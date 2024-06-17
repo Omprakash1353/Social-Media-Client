@@ -19,7 +19,7 @@ export default async function Page() {
   else
     return (
       <div className="h-full w-full p-10">
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-4 gap-4">
           <InfiniteExploreScroll initialPosts={parsedPosts} />
         </div>
       </div>

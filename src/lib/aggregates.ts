@@ -1,5 +1,4 @@
-import { PipelineStage } from "mongoose";
-import { Types } from "mongoose";
+import { PipelineStage, Types } from "mongoose";
 
 export const postHomeAggregate = (
   page: number,
@@ -118,6 +117,51 @@ export const postExploreAggregate = (
       post_Type: 1,
       media: { $arrayElemAt: ["$media", 0] },
       createdAt: 1,
+    },
+  },
+];
+
+export const profilePostAggregate = (
+  page: number,
+  limit: number,
+  username: string,
+): PipelineStage[] => [
+  {
+    $match: {
+      isArchived: false,
+      post_Type: { $in: ["POST", "REEL"] },
+    },
+  },
+  {
+    $lookup: {
+      from: "users", // collection name in the database
+      localField: "_id",
+      foreignField: "posts",
+      as: "userPosts",
+    },
+  },
+  {
+    $unwind: "$userPosts",
+  },
+  {
+    $match: {
+      "userPosts.username": username,
+    },
+  },
+  {
+    $sort: {
+      createdAt: -1,
+    },
+  },
+  {
+    $skip: (page - 1) * limit,
+  },
+  {
+    $limit: limit,
+  },
+  {
+    $project: {
+      media: { $arrayElemAt: ["$media", 0] },
     },
   },
 ];

@@ -4,13 +4,21 @@ import mongoose from "mongoose";
 
 import { getErrorMessage } from "@/helpers/errorMessageHandler";
 import { serverSession } from "@/hooks/useServerSession";
-import { postExploreAggregate, postHomeAggregate } from "@/lib/aggregates";
+import {
+  postExploreAggregate,
+  postHomeAggregate,
+  profilePostAggregate,
+} from "@/lib/aggregates";
 import { getBlurImage } from "@/lib/blur-image";
 import { dbConnect } from "@/lib/dbConnection";
 import { PostModel } from "@/models/post.model";
 import { UserModel } from "@/models/user.model";
 import { UploadImage } from "@/services/cloudinary";
-import { IPostStringified, PostExplorerType } from "@/types/types";
+import {
+  IPostStringified,
+  PostExplorerType,
+  ProfilePostsType,
+} from "@/types/types";
 
 export async function createPostAction(formData: FormData) {
   try {
@@ -157,6 +165,28 @@ export async function fetchMoreExplorePosts({
   // TODO: In sorting the data is changing random everytime without refresh
   const posts = await PostModel.aggregate(postExploreAggregate(page, 12));
   // .sort(() => Math.random() - 0.5);
+
+  return posts.length ? JSON.parse(JSON.stringify(posts)) : [];
+}
+
+export async function fetchMoreProfilePosts({
+  page = 1,
+  userId,
+}: {
+  userId: string;
+  page?: number;
+}): Promise<ProfilePostsType[] | []> {
+  await dbConnect();
+
+  const session = await serverSession();
+  if (!session?.user._id) return [];
+
+  const user = await UserModel.findById(session?.user._id);
+  if (!user) return [];
+
+  const posts = await PostModel.aggregate(
+    profilePostAggregate(page, 16, userId),
+  );
 
   return posts.length ? JSON.parse(JSON.stringify(posts)) : [];
 }
