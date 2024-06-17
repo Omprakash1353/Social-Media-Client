@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 export default function Page() {
@@ -7,9 +7,7 @@ export default function Page() {
     <div className="h-full w-full">
       <ScrollArea className="h-full w-full p-5">
         <div className="h-[90vh] w-full">
-          {[1, 2, 3, 4, 5, 6, 7, 8].map((e) => (
-            <Notifications key={e} />
-          ))}
+          <Notifications />
         </div>
         <ScrollBar orientation="vertical" />
       </ScrollArea>
@@ -19,8 +17,8 @@ export default function Page() {
 
 export function Notifications() {
   return (
-    <Card className="p-4 text-sm mb-4">
-      <h1 className="text-base mb-2">Lorem, ipsum dolor.</h1>
+    <Card className="mb-4 p-4 text-sm">
+      <h1 className="mb-2 text-base">Lorem, ipsum dolor.</h1>
       <p className="mb-2 text-muted-foreground">
         Lorem ipsum dolor sit amet consectetur adipisicing elit. Sint asperiores
         quibusdam tempora unde quod iusto illo perferendis iste numquam eius,
