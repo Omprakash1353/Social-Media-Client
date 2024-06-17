@@ -52,7 +52,7 @@ export function InfiniteExploreScroll({
       {[getColumns(0), getColumns(1), getColumns(2), getColumns(3)].map((column, idx) => (
         <div key={idx} className="flex flex-col gap-4">
           {column.map((e) => (
-            <Link href={"#"} className="bg-muted rounded-md">
+            <Link key={e.media.asset_id} href={"#"} className="bg-muted rounded-md">
               <Image
                 key={e.media.asset_id}
                 src={e.media.secure_url}

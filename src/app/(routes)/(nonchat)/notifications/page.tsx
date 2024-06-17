@@ -8,7 +8,7 @@ export default function Page() {
       <ScrollArea className="h-full w-full p-5">
         <div className="h-[90vh] w-full">
           {[1, 2, 3, 4, 5, 6, 7, 8].map((e) => (
-            <Notifications />
+            <Notifications key={e} />
           ))}
         </div>
         <ScrollBar orientation="vertical" />
