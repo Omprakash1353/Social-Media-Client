@@ -73,7 +73,7 @@ export function Sidebar({ myProfileId }: { myProfileId: string }) {
             label: "",
             icon: Settings,
             variant: "ghost",
-            href: "/settings",
+            href: "/settings/edit",
           },
         ]}
       />

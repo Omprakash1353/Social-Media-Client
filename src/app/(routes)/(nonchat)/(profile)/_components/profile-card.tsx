@@ -12,6 +12,7 @@ export function ProfileCard() {
   const userid = pathname.split("/")[1];
   const session = useSession();
 
+  // TODO: check in todo.txt
   async function getUserData(username: string) {
     const response = await fetch(`/api/users/${userid}`);
   }

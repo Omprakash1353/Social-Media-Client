@@ -11,8 +11,10 @@ export interface User extends Document {
     public_url: string;
     secure_url: string;
     asset_id: string;
+    blur_url: string;
   };
   account_Type: "PUBLIC" | "PRIVATE" | "BUSINESS";
+  gender: "MALE" | "FEMALE";
   googleId?: string;
   githubId?: string;
   followers?: (mongoose.Types.ObjectId | string)[];
@@ -20,6 +22,7 @@ export interface User extends Document {
   posts?: (mongoose.Types.ObjectId | string)[];
   searchHistory?: string[];
 }
+
 const schema = new Schema(
   {
     name: {
@@ -52,11 +55,16 @@ const schema = new Schema(
       public_url: String,
       secure_url: String,
       asset_id: String,
+      blur_url: String,
     },
     account_Type: {
       type: String,
       enum: ["PUBLIC", "PRIVATE", "BUSINESS"],
       default: "PUBLIC",
+    },
+    gender: {
+      type: String,
+      enum: ["MALE", "FEMALE"],
     },
     googleId: String,
     githubId: String,

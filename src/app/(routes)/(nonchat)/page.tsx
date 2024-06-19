@@ -17,7 +17,6 @@ export default async function Page() {
     postHomeAggregate(1, 3, new mongoose.Types.ObjectId(session?.user._id)),
   );
   const ParsedPosts = JSON.parse(JSON.stringify(posts)) as IPostStringified[];
-  console.log(ParsedPosts)
 
   return (
     <div className="mr-5 flex w-full flex-col items-center justify-center gap-3">

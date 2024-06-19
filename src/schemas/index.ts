@@ -40,3 +40,36 @@ export const PostFormSchema = z
   );
 
 export type PostFormSchemaType = z.infer<typeof PostFormSchema>;
+
+export const appearanceFormSchema = z.object({
+  theme: z.enum(["light", "dark", "system"], {
+    required_error: "Please select a theme.",
+  }),
+});
+
+export type AppearanceFormValues = z.infer<typeof appearanceFormSchema>;
+
+export const accountFormSchema = z.object({
+  username: z
+    .string()
+    .min(2, {
+      message: "Username must be at least 2 characters.",
+    })
+    .max(30, {
+      message: "Username must not be longer than 30 characters.",
+    })
+    .optional(),
+  bio: z
+    .string()
+    .min(5, {
+      message: "Bio must be at least 5 characters.",
+    })
+    .max(150, {
+      message: "Bio must not be longer than 150 characters.",
+    })
+    .optional(),
+  gender: z.enum(["MALE", "FEMALE"]).optional(),
+  avatar: z.instanceof(File).optional(),
+});
+
+export type AccountFormValues = z.infer<typeof accountFormSchema>;

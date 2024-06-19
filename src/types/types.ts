@@ -1,4 +1,5 @@
 import { IPost } from "@/models/post.model";
+import mongoose from "mongoose";
 
 export type IPostStringified = Omit<
   IPost,
@@ -34,11 +35,13 @@ export type PostExplorerType = {
 };
 
 export type ProfilePostsType = {
+  _id: string;
+  media: {
+    secure_url: string;
+    blur_url: string;
+    asset_id: string;
     _id: string;
-    media: {
-      secure_url: string;
-      blur_url: string;
-      asset_id: string;
-      _id: string;
-    };
   };
+};
+
+export type ObjectType = mongoose.Types.ObjectId;
