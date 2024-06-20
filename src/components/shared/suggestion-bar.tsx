@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link";
+
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";

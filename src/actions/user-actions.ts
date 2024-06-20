@@ -1,11 +1,12 @@
 "use server";
 
 import { serverSession } from "@/hooks/useServerSession";
+import { profileData } from "@/lib/aggregates";
 import { getBlurImage } from "@/lib/blur-image";
 import { dbConnect } from "@/lib/dbConnection";
 import { UserModel } from "@/models/user.model";
 import { UploadImage } from "@/services/cloudinary";
-import { ObjectType } from "@/types/types";
+import { ObjectType, UserCardType } from "@/types/types";
 
 export async function changeUserAccountType(e: boolean): Promise<{
   _id: string | ObjectType;
@@ -86,9 +87,9 @@ export async function editUserData(formData: FormData) {
   };
 }
 
-// TODO: get user data for the profile-card
-export async function getUserData(username: string) {
+export async function getUserData(username: string): Promise<UserCardType> {
   await dbConnect();
-
-  const userData = await UserModel.find({ username: username });
+  const userData = await UserModel.aggregate(profileData(username));
+  if (!userData.length) throw new Error("Invalid userid");
+  return JSON.parse(JSON.stringify(userData[0]));
 }

@@ -1,8 +1,9 @@
 "use client";
 
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function ProfileTabs() {
   const pathname = usePathname();

@@ -17,6 +17,7 @@ import { UploadImage } from "@/services/cloudinary";
 import {
   IPostStringified,
   PostExplorerType,
+  PostReactionType,
   ProfilePostsType,
 } from "@/types/types";
 
@@ -189,4 +190,52 @@ export async function fetchMoreProfilePosts({
   );
 
   return posts.length ? JSON.parse(JSON.stringify(posts)) : [];
+}
+
+export async function likePostsAction({ post_id, user_id }: PostReactionType) {
+  try {
+    await dbConnect();
+    const user = await UserModel.findById(new mongoose.Types.ObjectId(user_id));
+    if (!user) throw new Error("User isn't logged in !");
+
+    const post = await PostModel.findByIdAndUpdate(
+      post_id,
+      {
+        $addToSet: { likes: new mongoose.Types.ObjectId(user_id) },
+      },
+      { new: true, projection: { likes: 1 } },
+    );
+
+    if (!post) {
+      throw new Error("Post not found");
+    }
+
+    return post.likes?.length ? JSON.parse(JSON.stringify(post.likes)) : [];
+  } catch (error) {
+    console.error("Error liking/unliking post:", error);
+    throw error;
+  }
+}
+
+export async function dislikePostsAction({ post_id, user_id }: PostReactionType) {
+  try {
+    await dbConnect();
+
+    const post = await PostModel.findByIdAndUpdate(
+      post_id,
+      {
+        $pull: { likes: new mongoose.Types.ObjectId(user_id) },
+      },
+      { new: true, projection: { likes: 1 } },
+    );
+
+    if (!post) {
+      throw new Error("Post not found");
+    }
+
+    return post.likes?.length ? JSON.parse(JSON.stringify(post.likes)) : [];
+  } catch (error) {
+    console.error("Error liking/unliking post:", error);
+    throw error;
+  }
 }

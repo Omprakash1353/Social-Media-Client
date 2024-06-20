@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { changeUserAccountType } from "@/actions/user-actions";
 import { Switch } from "@/components/ui/switch";
-import { toast } from "sonner";
 
 export function AccountPrivacyForm({
   isPrivateAccount,

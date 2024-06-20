@@ -1,5 +1,8 @@
 "use client";
 
+import Image from "next/image";
+import { useState } from "react";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,8 +12,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import Image from "next/image";
-import { useState } from "react";
 
 export function CreateStoryForm() {
   const [img, setImg] = useState<File | null>();

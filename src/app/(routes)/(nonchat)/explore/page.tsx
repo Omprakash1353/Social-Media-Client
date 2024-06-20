@@ -1,7 +1,6 @@
 import { dbConnect } from "@/lib/dbConnection";
 import { PostModel } from "@/models/post.model";
 import { postExploreAggregate } from "@/lib/aggregates";
-import { PostExplorerType } from "@/types/types";
 import { InfiniteExploreScroll } from "./_components/infinite-explore-scroll";
 
 export default async function Page() {

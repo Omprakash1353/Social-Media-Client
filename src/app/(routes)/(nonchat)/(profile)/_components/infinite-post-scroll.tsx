@@ -53,27 +53,29 @@ export function InfiniteProfilePostScroll({
 
   return (
     <>
-      {[getColumns(0), getColumns(1), getColumns(2), getColumns(3)].map(
-        (column, idx) => (
-          <div key={idx} className="flex flex-col gap-4">
-            {column.map((e) => (
-              <Link href={"#"} className="rounded-md bg-muted" key={e._id}>
-                <Image
-                  key={e.media.asset_id}
-                  src={e.media.secure_url}
-                  placeholder="blur"
-                  blurDataURL={e.media.blur_url}
-                  sizes="100vw"
-                  alt="image"
-                  height={300}
-                  width={500}
-                  className="rounded-md"
-                />
-              </Link>
-            ))}
-          </div>
-        ),
-      )}
+      <div className="grid grid-cols-4 items-center justify-center gap-3">
+        {[getColumns(0), getColumns(1), getColumns(2), getColumns(3)].map(
+          (column, idx) => (
+            <div key={idx} className="flex flex-col gap-4">
+              {column.map((e) => (
+                <Link href={"#"} className="rounded-md bg-muted" key={e._id}>
+                  <Image
+                    key={e.media.asset_id}
+                    src={e.media.secure_url}
+                    placeholder="blur"
+                    blurDataURL={e.media.blur_url}
+                    sizes="100vw"
+                    alt="image"
+                    height={300}
+                    width={500}
+                    className="rounded-md"
+                  />
+                </Link>
+              ))}
+            </div>
+          ),
+        )}
+      </div>
       <div
         className="flex h-20 w-full items-center justify-center pb-32 pt-10"
         ref={ref}

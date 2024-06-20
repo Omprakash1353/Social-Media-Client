@@ -45,3 +45,16 @@ export type ProfilePostsType = {
 };
 
 export type ObjectType = mongoose.Types.ObjectId;
+
+export type UserCardType = {
+  bio: string;
+  avatar: { asset_id: string; secure_url: string; blur_url: string };
+  name: string;
+  username: string;
+  email: string;
+  followersCount: number;
+  followingsCount: number;
+  mediaCount: number;
+};
+
+export type PostReactionType = { user_id: string; post_id: string };

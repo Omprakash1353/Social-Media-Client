@@ -1,10 +1,10 @@
 "use client";
 
 import { Search } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 import { Input } from "../ui/input";
 import { Separator } from "../ui/separator";
-import { usePathname } from "next/navigation";
 import { Button } from "../ui/button";
 import { ModeToggle } from "../specific/toggle-mode";
 

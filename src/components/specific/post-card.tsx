@@ -12,7 +12,8 @@ import {
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useMutation } from "@tanstack/react-query";
 
 import {
   DropdownMenu,
@@ -23,7 +24,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Input } from "../ui/input";
 import { getTime } from "@/lib/utils";
-import { IPostStringified } from "@/types/types";
+import { IPostStringified, PostReactionType } from "@/types/types";
 import {
   Carousel,
   CarouselContent,
@@ -31,16 +32,62 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "../ui/carousel";
+import { dislikePostsAction, likePostsAction } from "@/actions/post-actions";
 
 export function PostCard({ postData }: { postData: IPostStringified }) {
   const { data: session } = useSession();
+  const userId = session?.user._id;
 
-  const [likes, setLikes] = useState<number>(postData?.likes?.length || 0);
+  const [hasLiked, setHasLiked] = useState(() =>
+    typeof userId === "string"
+      ? Boolean(postData.likes.includes(userId))
+      : false,
+  );
 
+  const [likes, setLikes] = useState(postData?.likes?.length || 0);
   const [isAnimating, setIsAnimating] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleDoubleClick = () => {
+  useEffect(() => {
+    if (userId) {
+      const isLiked = postData.likes.includes(userId);
+      setHasLiked(isLiked);
+    }
+  }, [userId, postData.likes]);
+
+  const dislikePosts = useCallback(
+    async ({ user_id, post_id }: PostReactionType) => {
+      const res = await dislikePostsAction({ user_id, post_id });
+      return res.length;
+    },
+    [],
+  );
+
+  const likePosts = useCallback(
+    async ({ user_id, post_id }: PostReactionType) => {
+      const res = await likePostsAction({ user_id, post_id });
+      return res.length;
+    },
+    [],
+  );
+
+  const { mutateAsync: likePostsMutation } = useMutation({
+    mutationFn: likePosts,
+    onSuccess: (data) => {
+      setLikes(data);
+      setHasLiked(true);
+    },
+  });
+
+  const { mutateAsync: dislikePostsMutation } = useMutation({
+    mutationFn: dislikePosts,
+    onSuccess: (data) => {
+      setLikes(data);
+      setHasLiked(false);
+    },
+  });
+
+  const handleDoubleClick = useCallback(async () => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
@@ -50,7 +97,38 @@ export function PostCard({ postData }: { postData: IPostStringified }) {
     timeoutRef.current = setTimeout(() => {
       setIsAnimating(false);
     }, 600);
-  };
+
+    if (!hasLiked) {
+      setHasLiked(true);
+      setLikes((prev) => prev + 1);
+      if (userId) {
+        await likePostsMutation({
+          user_id: userId,
+          post_id: postData._id,
+        });
+      }
+    }
+  }, [hasLiked, likePostsMutation, postData._id, userId]);
+
+  const toggleLike = useCallback(async () => {
+    setHasLiked((prev) => !prev);
+    setLikes((prev) => prev + (hasLiked ? -1 : 1));
+    try {
+      if (userId) {
+        if (!hasLiked) {
+          await likePostsMutation({
+            user_id: userId,
+            post_id: postData._id,
+          });
+        } else {
+          await dislikePostsMutation({
+            user_id: userId,
+            post_id: postData._id,
+          });
+        }
+      }
+    } catch (error: unknown) {}
+  }, [hasLiked, likePostsMutation, dislikePostsMutation, postData._id, userId]);
 
   const pastTime = useMemo(
     () => getTime(postData?.createdAt),
@@ -86,7 +164,7 @@ export function PostCard({ postData }: { postData: IPostStringified }) {
         </div>
         <PostDropdown
           post_id={postData._id}
-          isOwnersPost={session?.user._id === postData?.user?._id}
+          isOwnersPost={userId === postData?.user?._id}
         />
       </div>
 
@@ -133,7 +211,7 @@ export function PostCard({ postData }: { postData: IPostStringified }) {
               height: "100px",
               color: "red",
               fill: "red",
-            }} // Adjust the size and color as needed
+            }}
           />
         </div>
       )}
@@ -142,15 +220,17 @@ export function PostCard({ postData }: { postData: IPostStringified }) {
         <PostCarousel
           isAnimating={isAnimating}
           handleDoubleClick={handleDoubleClick}
-          media={postData.media.map((mediaItem) => ({
-            ...mediaItem,
-          }))}
+          media={postData.media}
         />
       )}
 
       <div className={`z-20 flex items-center justify-between py-3`}>
         <div className="flex items-center gap-4">
-          <Heart size={20} />
+          <Heart
+            size={20}
+            className={`${hasLiked && "border-red-500 fill-red-500"} cursor-pointer`}
+            onClick={toggleLike}
+          />
           <MessageCircle size={20} />
           <Send size={20} />
         </div>
@@ -184,10 +264,9 @@ function PostCarousel({
   return (
     <Carousel className="relative w-full" onDoubleClick={handleDoubleClick}>
       <CarouselContent className="relative w-full">
-        {media.map((url, index) => (
+        {media.map((url) => (
           <CarouselItem className="w-full" key={url.public_id}>
             <Image
-              key={index}
               src={url.secure_url}
               alt="slides"
               className="cursor-pointer select-none object-contain object-center"

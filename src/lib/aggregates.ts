@@ -165,3 +165,78 @@ export const profilePostAggregate = (
     },
   },
 ];
+
+export const profileData = (username: string) => [
+  {
+    $match: {
+      username,
+    },
+  },
+  {
+    $project: {
+      bio: 1,
+      avatar: 1,
+      name: 1,
+      username: 1,
+      email: 1,
+      followersCount: {
+        $size: { $ifNull: ["$followers", []] },
+      },
+      followingsCount: {
+        $size: { $ifNull: ["$followings", []] },
+      },
+      posts: 1,
+    },
+  },
+  {
+    $lookup: {
+      from: "posts",
+      localField: "posts",
+      foreignField: "_id",
+      as: "posts",
+    },
+  },
+  {
+    $unwind: {
+      path: "$posts",
+      preserveNullAndEmptyArrays: true,
+    },
+  },
+  {
+    $addFields: {
+      postMediaCount: {
+        $size: { $ifNull: ["$posts.media", []] },
+      },
+    },
+  },
+  {
+    $group: {
+      _id: "$_id",
+      bio: { $first: "$bio" },
+      avatar: { $first: "$avatar" },
+      name: { $first: "$name" },
+      email: { $first: "$email" },
+      username: { $first: "$username" },
+      followersCount: {
+        $first: "$followersCount",
+      },
+      followingsCount: {
+        $first: "$followingsCount",
+      },
+      mediaCount: { $sum: "$postMediaCount" },
+    },
+  },
+  {
+    $project: {
+      _id: 0,
+      bio: 1,
+      avatar: 1,
+      name: 1,
+      email: 1,
+      username: 1,
+      followersCount: 1,
+      followingsCount: 1,
+      mediaCount: 1,
+    },
+  },
+];
