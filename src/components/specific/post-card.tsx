@@ -1,6 +1,8 @@
 "use client";
 
+import { useMutation } from "@tanstack/react-query";
 import {
+  Archive,
   Bookmark,
   EllipsisVertical,
   Heart,
@@ -8,23 +10,23 @@ import {
   Pencil,
   Send,
   Trash,
+  User2,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { dislikePostsAction, likePostsAction } from "@/actions/post-actions";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Input } from "../ui/input";
 import { getTime } from "@/lib/utils";
 import { IPostStringified, PostReactionType } from "@/types/types";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import {
   Carousel,
   CarouselContent,
@@ -32,12 +34,13 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "../ui/carousel";
-import { dislikePostsAction, likePostsAction } from "@/actions/post-actions";
+import { Input } from "../ui/input";
 
 export function PostCard({ postData }: { postData: IPostStringified }) {
   const { data: session } = useSession();
   const userId = session?.user._id;
 
+  // TODO: this if user has liked or not must come from backend inorder to make it faster
   const [hasLiked, setHasLiked] = useState(() =>
     typeof userId === "string"
       ? Boolean(postData.likes.includes(userId))
@@ -141,7 +144,7 @@ export function PostCard({ postData }: { postData: IPostStringified }) {
         <div className="flex items-center gap-3">
           <Link href={`/${postData?.user?.username}`}>
             <Avatar>
-              <AvatarImage src="/avatars/03.png" />
+              <AvatarImage src={postData?.user?.avatar?.secure_url} />
               <AvatarFallback>
                 {postData?.user?.username.toUpperCase().substring(0, 2)}
               </AvatarFallback>
@@ -155,6 +158,7 @@ export function PostCard({ postData }: { postData: IPostStringified }) {
               </Link>
               • <span className="text-sm text-stone-600">{pastTime} ago</span>
             </p>
+
             <div className="flex-center gap-2">
               <p className="text-xs text-muted-foreground">
                 {postData.location && postData.location}
@@ -308,14 +312,27 @@ function PostDropdown({
         <EllipsisVertical size={20} className="cursor-pointer" />
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-32">
-        <DropdownMenuItem className="cursor-pointer">
-          <Pencil className="mr-5 h-4 w-4" /> Edit
-        </DropdownMenuItem>
+        {!isOwnersPost && (
+          <>
+            <DropdownMenuItem className="cursor-pointer">
+              <User2 className="mr-5 h-4 w-4" /> Follow
+            </DropdownMenuItem>
+          </>
+        )}
         {isOwnersPost && (
-          <DropdownMenuItem className="cursor-pointer text-red-500">
-            <Trash className="mr-5 h-4 w-4" />
-            Delete
-          </DropdownMenuItem>
+          <>
+            <DropdownMenuItem className="cursor-pointer">
+              <Pencil className="mr-5 h-4 w-4" /> Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer text-red-500">
+              <Trash className="mr-5 h-4 w-4" />
+              Delete
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer">
+              <Archive className="mr-5 h-4 w-4" />
+              Archive
+            </DropdownMenuItem>
+          </>
         )}
       </DropdownMenuContent>
     </DropdownMenu>

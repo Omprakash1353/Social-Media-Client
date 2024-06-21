@@ -164,7 +164,9 @@ export async function fetchMoreExplorePosts({
   if (!user) return [];
 
   // TODO: In sorting the data is changing random everytime without refresh
-  const posts = await PostModel.aggregate(postExploreAggregate(page, 12));
+  const posts = await PostModel.aggregate(
+    postExploreAggregate(page, 12, new mongoose.Types.ObjectId(session.user._id)),
+  );
   // .sort(() => Math.random() - 0.5);
 
   return posts.length ? JSON.parse(JSON.stringify(posts)) : [];
@@ -217,7 +219,10 @@ export async function likePostsAction({ post_id, user_id }: PostReactionType) {
   }
 }
 
-export async function dislikePostsAction({ post_id, user_id }: PostReactionType) {
+export async function dislikePostsAction({
+  post_id,
+  user_id,
+}: PostReactionType) {
   try {
     await dbConnect();
 

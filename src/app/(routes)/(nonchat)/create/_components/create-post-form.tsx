@@ -61,10 +61,12 @@ export const CreatePostForm: React.FC<CreatePostFormProps> = ({
   const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && inputValue.trim() !== "") {
       e.preventDefault();
-      if (inputValue.trim().startsWith("#"))
-        setTags([...tags, inputValue.trim()]);
-      else setTags([...tags, `#${inputValue.trim()}`]);
-      setValue("hashTags", [...tags, inputValue.trim()]);
+      const newTag = inputValue.trim().startsWith("#")
+        ? inputValue.trim()
+        : `#${inputValue.trim()}`;
+      const newTags = [...tags, newTag];
+      setTags(newTags);
+      setValue("hashTags", newTags);
       setInputValue("");
     }
   };
@@ -105,7 +107,6 @@ export const CreatePostForm: React.FC<CreatePostFormProps> = ({
   });
 
   useEffect(() => {
-    // Revoke the data uris to avoid memory leaks
     return () => files.forEach((file) => URL.revokeObjectURL(file.preview));
   }, [files]);
 
@@ -234,7 +235,7 @@ export const CreatePostForm: React.FC<CreatePostFormProps> = ({
           </div>
           <div className="flex w-full flex-col gap-2">
             <div className="flex w-full flex-col gap-2">
-              <Label>Tag</Label>
+              <Label>Hashtag</Label>
               <Input
                 placeholder="Add Tag"
                 value={inputValue}

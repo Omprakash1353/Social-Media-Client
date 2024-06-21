@@ -53,12 +53,16 @@ export function InfiniteProfilePostScroll({
 
   return (
     <>
-      <div className="grid grid-cols-4 items-center justify-center gap-3">
+      <div className="grid grid-cols-4 gap-3">
         {[getColumns(0), getColumns(1), getColumns(2), getColumns(3)].map(
           (column, idx) => (
             <div key={idx} className="flex flex-col gap-4">
               {column.map((e) => (
-                <Link href={"#"} className="rounded-md bg-muted" key={e._id}>
+                <Link
+                  key={e.media.asset_id}
+                  href={"#"}
+                  className="rounded-md bg-muted"
+                >
                   <Image
                     key={e.media.asset_id}
                     src={e.media.secure_url}

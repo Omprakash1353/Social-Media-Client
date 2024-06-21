@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { BellIcon, SettingsIcon, Share2 } from "lucide-react";
+import { SettingsIcon, Share2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -10,6 +10,22 @@ import { getUserData } from "@/actions/user-actions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export function ProfileCard() {
   const pathname = usePathname();
@@ -52,13 +68,50 @@ export function ProfileCard() {
             {session?.user.username !== data?.username && (
               <Button size={"sm"}>Follow</Button>
             )}
-            {session?.user.username === data?.username && (
-              <Button size={"sm"}>View Archive</Button>
+            {session?.user.username !== data?.username && (
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button size={"sm"} variant={"secondary"}>Pending</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Cancel Follow Request</DialogTitle>
+                    <DialogDescription>
+                      Are you absolutely sure you want to cancel follow request
+                      ?
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <Button variant={"destructive"}>
+                      Yes
+                    </Button>
+                    <DialogClose asChild>
+                      <Button type="button" variant="secondary">
+                        No
+                      </Button>
+                    </DialogClose>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             )}
             {session?.user.username !== data?.username && (
-              <Button size={"sm"}>
-                <BellIcon className="h-4 w-4" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size={"sm"} variant={"secondary"}>Following</Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem className="text-red-500">
+                    Unfollow
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>Mute</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            {session?.user.username !== data?.username && (
+              <Button size={"sm"} variant={"secondary"}>Message</Button>
+            )}
+            {session?.user.username === data?.username && (
+              <Button size={"sm"}>View Archive</Button>
             )}
             {session?.user.username === data?.username && (
               <Link href="settings/edit">

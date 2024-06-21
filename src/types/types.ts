@@ -12,6 +12,12 @@ export type IPostStringified = Omit<
     email: string;
     username: string;
     account_Type: "PUBLIC" | "PRIVATE" | "BUSINESS";
+    avatar: {
+      secure_url: string;
+      asset_id: string;
+      blur_url: string;
+      public_id: string;
+    };
   };
   likes: string[];
   saved: string[];
@@ -55,6 +61,7 @@ export type UserCardType = {
   followersCount: number;
   followingsCount: number;
   mediaCount: number;
+  account_Type: "PRIVATE" | "PUBLIC";
 };
 
 export type PostReactionType = { user_id: string; post_id: string };

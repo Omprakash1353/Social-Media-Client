@@ -24,7 +24,8 @@ export const postHomeAggregate = (
             email: 1,
             username: 1,
             account_Type: 1,
-            followers: 1,
+            avatar: 1,
+            followers: { $ifNull: ["$followers", []] },
           },
         },
       ],
@@ -38,9 +39,14 @@ export const postHomeAggregate = (
     $addFields: {
       isCurrentUserFollowing: {
         $cond: {
-          if: { $eq: ["$user.account_Type", "PRIVATE"] },
-          then: { $in: [currentUserId, "$user.followers"] },
-          else: true,
+          if: {
+            $or: [
+              { $eq: ["$user.account_Type", "PUBLIC"] },
+              { $eq: ["$user._id", currentUserId] },
+            ],
+          },
+          then: true,
+          else: { $in: [currentUserId, "$user.followers"] },
         },
       },
     },
@@ -83,6 +89,7 @@ export const postHomeAggregate = (
         name: 1,
         email: 1,
         username: 1,
+        avatar: 1,
         account_Type: 1,
       },
     },
@@ -90,15 +97,42 @@ export const postHomeAggregate = (
 ];
 
 // TODO: post_Type must be POST | REEL and also make the change in the infinite scroll page it takes only the Image later it must take video as well post_Type is pasted in the aggregate result
+
 export const postExploreAggregate = (
   page: number,
   limit: number,
+  currentUserId: Types.ObjectId,
 ): PipelineStage[] => [
   {
     $match: {
       post_Type: "POST",
       isArchived: false,
       media: { $exists: true, $ne: [] },
+    },
+  },
+  {
+    $lookup: {
+      from: "users",
+      let: { postId: "$_id" },
+      pipeline: [
+        { $match: { $expr: { $in: ["$$postId", "$posts"] } } },
+        {
+          $project: {
+            _id: 1,
+            account_Type: 1,
+          },
+        },
+      ],
+      as: "user",
+    },
+  },
+  {
+    $unwind: "$user",
+  },
+  {
+    $match: {
+      "user.account_Type": "PUBLIC",
+      "user._id": { $ne: currentUserId },
     },
   },
   {
@@ -121,6 +155,7 @@ export const postExploreAggregate = (
   },
 ];
 
+
 export const profilePostAggregate = (
   page: number,
   limit: number,
@@ -134,7 +169,7 @@ export const profilePostAggregate = (
   },
   {
     $lookup: {
-      from: "users", // collection name in the database
+      from: "users",
       localField: "_id",
       foreignField: "posts",
       as: "userPosts",
