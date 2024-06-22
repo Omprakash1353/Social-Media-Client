@@ -1,4 +1,4 @@
-import { PipelineStage, Types } from "mongoose";
+import mongoose, { PipelineStage, Types } from "mongoose";
 
 export const postHomeAggregate = (
   page: number,
@@ -155,18 +155,12 @@ export const postExploreAggregate = (
   },
 ];
 
-
 export const profilePostAggregate = (
   page: number,
   limit: number,
   username: string,
+  currentUserId: mongoose.Types.ObjectId,
 ): PipelineStage[] => [
-  {
-    $match: {
-      isArchived: false,
-      post_Type: { $in: ["POST", "REEL"] },
-    },
-  },
   {
     $lookup: {
       from: "users",
@@ -181,22 +175,150 @@ export const profilePostAggregate = (
   {
     $match: {
       "userPosts.username": username,
+      isArchived: false,
+      post_Type: { $in: ["POST", "REEL"] },
     },
   },
   {
-    $sort: {
-      createdAt: -1,
+    $addFields: {
+      isCurrentUser: {
+        $eq: ["$userPosts._id", currentUserId],
+      },
+      isFollower: {
+        $in: [
+          currentUserId,
+          {
+            $ifNull: ["$userPosts.followers", []],
+          },
+        ],
+      },
+      isPublic: {
+        $eq: ["$userPosts.account_Type", "PUBLIC"],
+      },
     },
   },
   {
-    $skip: (page - 1) * limit,
+    $facet: {
+      posts: [
+        {
+          $match: {
+            $or: [
+              { isCurrentUser: true },
+              { isPublic: true },
+              { isFollower: true },
+            ],
+          },
+        },
+        { $sort: { createdAt: -1 } },
+        { $skip: (page - 1) * limit },
+        { $limit: limit },
+        {
+          $project: {
+            media: {
+              $arrayElemAt: ["$media", 0],
+            },
+          },
+        },
+      ],
+      userInfo: [
+        {
+          $project: {
+            account_Type: "$userPosts.account_Type",
+            isCurrentUser: 1,
+            isFollower: 1,
+            isPublic: 1,
+          },
+        },
+      ],
+    },
   },
   {
-    $limit: limit,
+    $addFields: {
+      message: {
+        $cond: [
+          { $eq: [{ $size: "$userInfo" }, 0] },
+          "Posts not found",
+          {
+            $cond: [
+              {
+                $and: [
+                  {
+                    $eq: [
+                      {
+                        $arrayElemAt: ["$userInfo.account_Type", 0],
+                      },
+                      "PRIVATE",
+                    ],
+                  },
+                  {
+                    $ne: [
+                      {
+                        $arrayElemAt: ["$userInfo.isCurrentUser", 0],
+                      },
+                      true,
+                    ],
+                  },
+                  {
+                    $ne: [
+                      {
+                        $arrayElemAt: ["$userInfo.isFollower", 0],
+                      },
+                      true,
+                    ],
+                  },
+                ],
+              },
+              "Account is private",
+              {
+                $cond: [
+                  {
+                    $eq: [{ $size: "$posts" }, 0],
+                  },
+                  {
+                    $cond: [
+                      {
+                        $eq: [
+                          {
+                            $arrayElemAt: ["$userInfo.account_Type", 0],
+                          },
+                          "PUBLIC",
+                        ],
+                      },
+                      "User hasn't posted yet",
+                      {
+                        $cond: [
+                          {
+                            $or: [
+                              {
+                                $arrayElemAt: ["$userInfo.isCurrentUser", 0],
+                              },
+                              {
+                                $arrayElemAt: ["$userInfo.isFollower", 0],
+                              },
+                            ],
+                          },
+                          "User hasn't posted yet",
+                          "Account is private",
+                        ],
+                      },
+                    ],
+                  },
+                  null,
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    },
   },
   {
     $project: {
-      media: { $arrayElemAt: ["$media", 0] },
+      posts: 1,
+      userInfo: {
+        $arrayElemAt: ["$userInfo", 0],
+      },
+      message: 1,
     },
   },
 ];

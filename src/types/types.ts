@@ -41,14 +41,27 @@ export type PostExplorerType = {
 };
 
 export type ProfilePostsType = {
-  _id: string;
-  media: {
-    secure_url: string;
-    blur_url: string;
-    asset_id: string;
+  message: string | null;
+  userInfo: {
+    account_Type: "PRIVATE" | "PUBLIC";
+    isFollower: boolean;
+    isCurrentUser: boolean;
+    isPublic: boolean;
     _id: string;
   };
-};
+  posts: {
+    _id: string;
+    media: {
+      asset_id: string;
+      blur_url: string;
+      secure_url: string;
+      public_id: string;
+      _id: string;
+    };
+  }[];
+}[];
+
+export type InfiniteProfilePostsType = ProfilePostsType[0]["posts"];
 
 export type ObjectType = mongoose.Types.ObjectId;
 

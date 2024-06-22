@@ -1,21 +1,21 @@
 "use client";
 
-import { useEffect } from "react";
-import Image from "next/image";
-import { useInView } from "react-intersection-observer";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import Image from "next/image";
 import Link from "next/link";
+import { useEffect } from "react";
+import { useInView } from "react-intersection-observer";
 
-import { ProfilePostsType } from "@/types/types";
-import { Icons } from "@/components/shared/icons";
 import { fetchMoreProfilePosts } from "@/actions/post-actions";
+import { Icons } from "@/components/shared/icons";
+import { InfiniteProfilePostsType } from "@/types/types";
 
 export function InfiniteProfilePostScroll({
   initialPosts,
   userId,
   currentUserId,
 }: {
-  initialPosts: ProfilePostsType[] | [];
+  initialPosts: InfiniteProfilePostsType | [];
   userId: string;
   currentUserId: string;
 }) {
@@ -45,7 +45,7 @@ export function InfiniteProfilePostScroll({
     }
   }, [inView, hasNextPage, fetchNextPage]);
 
-  function getColumns(colIndex: number): ProfilePostsType[] {
+  function getColumns(colIndex: number): InfiniteProfilePostsType {
     return data.pages.flatMap((page) =>
       page.filter((post, index) => index % 4 === colIndex),
     );

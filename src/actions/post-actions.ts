@@ -16,6 +16,7 @@ import { UserModel } from "@/models/user.model";
 import { UploadImage } from "@/services/cloudinary";
 import {
   IPostStringified,
+  InfiniteProfilePostsType,
   PostExplorerType,
   PostReactionType,
   ProfilePostsType,
@@ -165,7 +166,11 @@ export async function fetchMoreExplorePosts({
 
   // TODO: In sorting the data is changing random everytime without refresh
   const posts = await PostModel.aggregate(
-    postExploreAggregate(page, 12, new mongoose.Types.ObjectId(session.user._id)),
+    postExploreAggregate(
+      page,
+      12,
+      new mongoose.Types.ObjectId(session.user._id),
+    ),
   );
   // .sort(() => Math.random() - 0.5);
 
@@ -178,7 +183,7 @@ export async function fetchMoreProfilePosts({
 }: {
   userId: string;
   page?: number;
-}): Promise<ProfilePostsType[] | []> {
+}): Promise<InfiniteProfilePostsType | []> {
   await dbConnect();
 
   const session = await serverSession();
@@ -188,10 +193,15 @@ export async function fetchMoreProfilePosts({
   if (!user) return [];
 
   const posts = await PostModel.aggregate(
-    profilePostAggregate(page, 16, userId),
-  );
+    profilePostAggregate(
+      page,
+      16,
+      userId,
+      new mongoose.Types.ObjectId(session.user._id),
+    ),
+  ) as ProfilePostsType;
 
-  return posts.length ? JSON.parse(JSON.stringify(posts)) : [];
+  return posts.length ? JSON.parse(JSON.stringify(posts[0].posts)) : [];
 }
 
 export async function likePostsAction({ post_id, user_id }: PostReactionType) {
