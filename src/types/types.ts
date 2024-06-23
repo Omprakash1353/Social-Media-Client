@@ -78,3 +78,9 @@ export type UserCardType = {
 };
 
 export type PostReactionType = { user_id: string; post_id: string };
+
+export type SearchedUser = {
+  avatar: { secure_url: string; asset_id: string; blur_url: string };
+  username: string;
+  _id: string;
+}[];

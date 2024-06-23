@@ -6,7 +6,7 @@ import { getBlurImage } from "@/lib/blur-image";
 import { dbConnect } from "@/lib/dbConnection";
 import { UserModel } from "@/models/user.model";
 import { UploadImage } from "@/services/cloudinary";
-import { ObjectType, UserCardType } from "@/types/types";
+import { ObjectType, SearchedUser, UserCardType } from "@/types/types";
 
 export async function changeUserAccountType(e: boolean): Promise<{
   _id: string | ObjectType;
@@ -87,9 +87,18 @@ export async function editUserData(formData: FormData) {
   };
 }
 
-export async function getUserData(username: string): Promise<UserCardType> {
+export async function getSearchedUsers(searchUsers: string): Promise<SearchedUser> {
+  const regex = new RegExp(searchUsers, "i");
   await dbConnect();
-  const userData = await UserModel.aggregate(profileData(username));
-  if (!userData.length) throw new Error("Invalid userid");
-  return JSON.parse(JSON.stringify(userData[0]));
+  const results = await UserModel.find({ name: { $regex: regex } }).select(
+    "avatar username",
+  );
+  return results.length ? JSON.parse(JSON.stringify(results)) : [];
 }
+
+// export async function getUserData(username: string): Promise<UserCardType> {
+//   await dbConnect();
+//   const userData = await UserModel.aggregate(profileData(username));
+//   if (!userData.length) throw new Error("Invalid userid");
+//   return JSON.parse(JSON.stringify(userData[0]));
+// }

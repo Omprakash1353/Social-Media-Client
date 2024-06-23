@@ -1,6 +1,7 @@
-"use client"
+"use client";
 
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
@@ -8,6 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Separator } from "../ui/separator";
 
 export function SuggestionBar() {
+  const { data: session } = useSession();
+  if (!session?.user) return <div className="w-full h-full flex justify-center items-center">Loading... !!!</div>;
+
   return (
     <Card className="border-none text-sm shadow-none outline-none">
       <CardHeader>
@@ -16,12 +20,16 @@ export function SuggestionBar() {
       <CardContent>
         <div className="flex space-x-2">
           <Avatar>
-            <AvatarImage src="/avatars/03.png" />
-            <AvatarFallback>OM</AvatarFallback>
+            <AvatarImage src={`${session.user.avatar?.secure_url}`} />
+            <AvatarFallback>{session.user.name?.slice(0, 2).toUpperCase()}</AvatarFallback>
           </Avatar>
           <div>
-            <p className="text-sm font-medium leading-none">Isabella Nguyen</p>
-            <p className="text-sm text-muted-foreground">b@example.com</p>
+            <p className="text-sm font-medium leading-none">
+              <Link href={`/${session.user.username}`}>{session.user.username}</Link>
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {session.user.email}
+            </p>
           </div>
         </div>
         <Separator className="my-4" />
@@ -48,7 +56,7 @@ export function SuggestionBar() {
                     </p>
                   </div>
                 </div>
-                <Button className="h-7 w-20 text-sm">Follow</Button>
+                <Button size={"sm"}>Follow</Button>
               </Link>
             ))}
           </div>

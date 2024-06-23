@@ -9,8 +9,6 @@ import { UserModel } from "@/models/user.model";
 import { ProfilePostsType } from "@/types/types";
 import { InfiniteProfilePostScroll } from "../_components/infinite-post-scroll";
 
-
-
 export default async function Page({ params }: { params: { userId: string } }) {
   await dbConnect();
 
@@ -30,7 +28,7 @@ export default async function Page({ params }: { params: { userId: string } }) {
   );
   const initialPosts = JSON.parse(JSON.stringify(posts)) as ProfilePostsType;
 
-  if (initialPosts[0].message) return <div>{initialPosts[0].message}</div>;
+  if (initialPosts[0].message) return <div className="flex justify-center items-center h-full w-auto">{initialPosts[0].message}</div>;
 
   return (
     <InfiniteProfilePostScroll
