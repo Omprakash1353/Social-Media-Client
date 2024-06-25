@@ -1,4 +1,12 @@
-import mongoose, { Schema, model, Types } from "mongoose";
+import mongoose, { Schema, model, Types, Document } from "mongoose";
+import { models } from "mongoose";
+
+export interface Request extends Document {
+  requestType: "chat" | "follow";
+  status: "pending" | "accepted" | "rejected";
+  sender: Types.ObjectId;
+  receiver: Types.ObjectId;
+}
 
 const schema = new Schema(
   {
@@ -12,7 +20,6 @@ const schema = new Schema(
       default: "pending",
       enum: ["pending", "accepted", "rejected"],
     },
-
     sender: {
       type: Types.ObjectId,
       ref: "User",
@@ -29,4 +36,4 @@ const schema = new Schema(
   },
 );
 
-export const Request = mongoose.models.Request || model("Request", schema);
+export const RequestModel = models?.Request || model<Request>("Request", schema);

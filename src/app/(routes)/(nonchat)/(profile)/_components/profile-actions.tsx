@@ -3,77 +3,36 @@
 import { SettingsIcon } from "lucide-react";
 import Link from "next/link";
 
+import { FollowButton } from "@/components/shared/follow-button";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 export function ProfileActions({
   username,
   currentUser,
+  account_Type,
+  isFollowing,
+  hasRequested,
 }: {
   username: string;
   currentUser: string;
+  account_Type: "PUBLIC" | "PRIVATE";
+  isFollowing: boolean;
+  hasRequested: boolean;
 }) {
   return (
     <div className="flex items-center gap-x-3">
-      {currentUser !== username && <Button size={"sm"}>Follow</Button>}
       {currentUser !== username && (
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button size={"sm"} variant={"secondary"}>
-              Pending
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Cancel Follow Request</DialogTitle>
-              <DialogDescription>
-                Are you absolutely sure you want to cancel follow request ?
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant={"destructive"}>Yes</Button>
-              <DialogClose asChild>
-                <Button type="button" variant="secondary">
-                  No
-                </Button>
-              </DialogClose>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <FollowButton
+          currentUserID={currentUser}
+          profileID={username}
+          account_Type={account_Type}
+          isFollowing={isFollowing}
+          hasRequested={hasRequested}
+        />
       )}
       {currentUser !== username && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button size={"sm"} variant={"secondary"}>
-              Following
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem className="text-red-500">
-              Unfollow
-            </DropdownMenuItem>
-            <DropdownMenuItem>Mute</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
-      {currentUser !== username && (
-        <Button size={"sm"} variant={"secondary"}>
-          Message
+        <Button size={"sm"} variant={"secondary"} asChild>
+          <Link href={`/chat/${username}`}>Message</Link>
         </Button>
       )}
       {currentUser === username && (

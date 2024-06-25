@@ -1,12 +1,13 @@
 "use server";
 
 import { serverSession } from "@/hooks/useServerSession";
-import { profileData } from "@/lib/aggregates";
 import { getBlurImage } from "@/lib/blur-image";
 import { dbConnect } from "@/lib/dbConnection";
+import { RequestModel } from "@/models/request.model";
 import { UserModel } from "@/models/user.model";
 import { UploadImage } from "@/services/cloudinary";
 import { ObjectType, SearchedUser, UserCardType } from "@/types/types";
+import mongoose from "mongoose";
 
 export async function changeUserAccountType(e: boolean): Promise<{
   _id: string | ObjectType;
@@ -87,7 +88,9 @@ export async function editUserData(formData: FormData) {
   };
 }
 
-export async function getSearchedUsers(searchUsers: string): Promise<SearchedUser> {
+export async function getSearchedUsers(
+  searchUsers: string,
+): Promise<SearchedUser> {
   const regex = new RegExp(searchUsers, "i");
   await dbConnect();
   const results = await UserModel.find({ name: { $regex: regex } }).select(
@@ -96,9 +99,276 @@ export async function getSearchedUsers(searchUsers: string): Promise<SearchedUse
   return results.length ? JSON.parse(JSON.stringify(results)) : [];
 }
 
-// export async function getUserData(username: string): Promise<UserCardType> {
-//   await dbConnect();
-//   const userData = await UserModel.aggregate(profileData(username));
-//   if (!userData.length) throw new Error("Invalid userid");
-//   return JSON.parse(JSON.stringify(userData[0]));
-// }
+export async function followUser({
+  account_Type,
+  currentUserId,
+  userId,
+}: {
+  account_Type: "PRIVATE" | "PUBLIC";
+  currentUserId: string;
+  userId: string;
+}): Promise<{
+  isFollowing: boolean;
+  isRequested: boolean;
+  status: any;
+}> {
+  await dbConnect();
+  const newCurrentUserID = new mongoose.Types.ObjectId(currentUserId);
+  const userToFollow = new mongoose.Types.ObjectId(userId);
+
+  if (account_Type === "PRIVATE") {
+    let request = await RequestModel.findOneAndUpdate(
+      {
+        requestType: "follow",
+        sender: newCurrentUserID,
+        receiver: userToFollow,
+      },
+      { status: "pending" },
+      { new: true },
+    );
+
+    if (!request) {
+      request = await RequestModel.create({
+        requestType: "follow",
+        status: "pending",
+        sender: newCurrentUserID,
+        receiver: userToFollow,
+      });
+    }
+
+    return {
+      isFollowing: false,
+      isRequested: true,
+      status: request.status,
+    };
+  }
+
+  if (account_Type === "PUBLIC") {
+    const [currentUserRequest, currentUserFollowing] = await Promise.all([
+      UserModel.findByIdAndUpdate(
+        userToFollow,
+        { $addToSet: { followers: currentUserId } },
+        { new: true, projection: { followers: 1 } },
+      ),
+      UserModel.findByIdAndUpdate(
+        currentUserId,
+        { $addToSet: { followings: userToFollow } },
+        { new: true, projection: { followings: 1 } },
+      ),
+    ]);
+
+    if (!currentUserRequest || !currentUserFollowing) {
+      return {
+        isFollowing: false,
+        isRequested: false,
+        status: null,
+      };
+    }
+
+    let request = await RequestModel.findOneAndUpdate(
+      {
+        requestType: "follow",
+        sender: newCurrentUserID,
+        receiver: userToFollow,
+      },
+      { status: "accepted" },
+      { new: true },
+    );
+
+    if (!request) {
+      request = await RequestModel.create({
+        requestType: "follow",
+        status: "accepted",
+        sender: newCurrentUserID,
+        receiver: userToFollow,
+      });
+    }
+
+    return {
+      isFollowing: true,
+      isRequested: true,
+      status: request.status,
+    };
+  }
+
+  return { isFollowing: false, isRequested: false, status: null };
+}
+
+export async function unfollowUser({
+  currentUserId,
+  userId,
+}: {
+  currentUserId: string;
+  userId: string;
+}): Promise<{
+  isFollowing: boolean;
+  message: string;
+}> {
+  await dbConnect();
+  const newCurrentUserID = new mongoose.Types.ObjectId(currentUserId);
+  const userToUnfollow = new mongoose.Types.ObjectId(userId);
+
+  const [currentUserUpdate, userToUnfollowUpdate, requestDelete] =
+    await Promise.all([
+      UserModel.findByIdAndUpdate(
+        newCurrentUserID,
+        { $pull: { followings: userToUnfollow } },
+        { new: true },
+      ),
+      UserModel.findByIdAndUpdate(
+        userToUnfollow,
+        { $pull: { followers: newCurrentUserID } },
+        { new: true },
+      ),
+      RequestModel.findOneAndDelete({
+        requestType: "follow",
+        sender: newCurrentUserID,
+        receiver: userToUnfollow,
+      }),
+    ]);
+
+  if (!currentUserUpdate || !userToUnfollowUpdate || !requestDelete) {
+    return {
+      isFollowing: true,
+      message: "Failed to unfollow the user.",
+    };
+  }
+
+  return {
+    isFollowing: false,
+    message: "Successfully unfollowed the user and deleted the follow request.",
+  };
+}
+
+export async function acceptRequest({
+  currentUserId,
+  userId,
+}: {
+  currentUserId: string;
+  userId: string;
+}): Promise<{
+  success: boolean;
+  message: string;
+}> {
+  await dbConnect();
+  const newCurrentUserID = new mongoose.Types.ObjectId(currentUserId);
+  const requestorID = new mongoose.Types.ObjectId(userId);
+
+  const request = await RequestModel.findOneAndUpdate(
+    {
+      requestType: "follow",
+      sender: requestorID,
+      receiver: newCurrentUserID,
+      status: "pending",
+    },
+    { status: "accepted" },
+    { new: true },
+  );
+
+  if (!request) {
+    return {
+      success: false,
+      message: "No pending follow request found or already accepted/rejected.",
+    };
+  }
+
+  const [currentUserUpdate, requestorUpdate] = await Promise.all([
+    UserModel.findByIdAndUpdate(
+      newCurrentUserID,
+      { $addToSet: { followers: requestorID } },
+      { new: true },
+    ),
+    UserModel.findByIdAndUpdate(
+      requestorID,
+      { $addToSet: { followings: newCurrentUserID } },
+      { new: true },
+    ),
+  ]);
+
+  if (!currentUserUpdate || !requestorUpdate) {
+    return {
+      success: false,
+      message: "Failed to accept the follow request.",
+    };
+  }
+
+  return {
+    success: true,
+    message: "Follow request accepted successfully.",
+  };
+}
+
+export async function rejectRequest({
+  currentUserId,
+  userId,
+}: {
+  currentUserId: string;
+  userId: string;
+}): Promise<{
+  success: boolean;
+  message: string;
+}> {
+  await dbConnect();
+  const newCurrentUserID = new mongoose.Types.ObjectId(currentUserId);
+  const requestorID = new mongoose.Types.ObjectId(userId);
+
+  const request = await RequestModel.findOneAndUpdate(
+    {
+      requestType: "follow",
+      sender: requestorID,
+      receiver: newCurrentUserID,
+      status: "pending",
+    },
+    { status: "rejected" },
+    { new: true },
+  );
+
+  if (!request) {
+    return {
+      success: false,
+      message: "No pending follow request found or already accepted/rejected.",
+    };
+  }
+
+  return {
+    success: true,
+    message: "Follow request rejected successfully.",
+  };
+}
+
+export async function cancelRequest({
+  currentUserId,
+  userId,
+}: {
+  currentUserId: string;
+  userId: string;
+}): Promise<{
+  isFollowing: boolean;
+  isRequested: boolean;
+  message: string;
+}> {
+  await dbConnect();
+  const newCurrentUserID = new mongoose.Types.ObjectId(currentUserId);
+  const requestorID = new mongoose.Types.ObjectId(userId);
+
+  const request = await RequestModel.findOneAndDelete({
+    requestType: "follow",
+    sender: newCurrentUserID,
+    receiver: requestorID,
+    status: "pending",
+  });
+
+  if (!request) {
+    return {
+      isFollowing: false,
+      isRequested: true,
+      message: "No pending follow request found or already accepted/rejected.",
+    };
+  }
+
+  return {
+    isFollowing: false,
+    isRequested: false,
+    message: "Follow request cancelled successfully.",
+  };
+}

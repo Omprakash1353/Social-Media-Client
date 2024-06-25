@@ -323,7 +323,10 @@ export const profilePostAggregate = (
   },
 ];
 
-export const profileData = (username: string) => [
+export const profileData = (
+  username: string,
+  currentUserId: mongoose.Types.ObjectId,
+): PipelineStage[] => [
   {
     $match: {
       username,
@@ -336,6 +339,8 @@ export const profileData = (username: string) => [
       name: 1,
       username: 1,
       email: 1,
+      account_Type: 1,
+      followers: 1,
       followersCount: {
         $size: { $ifNull: ["$followers", []] },
       },
@@ -374,6 +379,8 @@ export const profileData = (username: string) => [
       name: { $first: "$name" },
       email: { $first: "$email" },
       username: { $first: "$username" },
+      account_Type: { $first: "$account_Type" },
+      followers: { $first: "$followers" },
       followersCount: {
         $first: "$followersCount",
       },
@@ -384,6 +391,47 @@ export const profileData = (username: string) => [
     },
   },
   {
+    $lookup: {
+      from: "requests",
+      let: { userId: "$_id" },
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $and: [
+                { $eq: ["$sender", currentUserId] },
+                { $eq: ["$receiver", "$$userId"] },
+                { $eq: ["$requestType", "follow"] },
+                { $eq: ["$status", "pending"] },
+              ],
+            },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            status: 1,
+          },
+        },
+      ],
+      as: "followRequest",
+    },
+  },
+  {
+    $addFields: {
+      isFollowing: {
+        $in: [currentUserId, { $ifNull: ["$followers", []] }],
+      },
+      hasRequested: {
+        $cond: {
+          if: { $gt: [{ $size: "$followRequest" }, 0] },
+          then: true,
+          else: false,
+        },
+      },
+    },
+  },
+  {
     $project: {
       _id: 0,
       bio: 1,
@@ -391,9 +439,12 @@ export const profileData = (username: string) => [
       name: 1,
       email: 1,
       username: 1,
+      account_Type: 1,
       followersCount: 1,
       followingsCount: 1,
       mediaCount: 1,
+      isFollowing: 1,
+      hasRequested: 1,
     },
   },
 ];

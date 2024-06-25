@@ -70,6 +70,8 @@ const schema = new Schema(
     githubId: String,
     posts: [{ type: mongoose.Types.ObjectId, ref: "Post" }],
     searchHistory: [{ type: String }],
+    followers: [{ type: mongoose.Types.ObjectId, ref: "User" }],
+    followings: [{ type: mongoose.Types.ObjectId, ref: "User" }],
   },
   {
     timestamps: true,

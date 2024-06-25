@@ -75,6 +75,8 @@ export type UserCardType = {
   followingsCount: number;
   mediaCount: number;
   account_Type: "PRIVATE" | "PUBLIC";
+  isFollowing: boolean;
+  hasRequested: boolean;
 };
 
 export type PostReactionType = { user_id: string; post_id: string };
