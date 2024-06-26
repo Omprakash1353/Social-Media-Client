@@ -3,7 +3,6 @@ import {
   Heart,
   Home,
   PlusSquare,
-  Search,
   Send,
   Settings,
   Users,
@@ -11,6 +10,7 @@ import {
 
 import { Separator } from "../ui/separator";
 import { Nav } from "./nav";
+import { SignOut } from "../specific/logout";
 
 export function Sidebar({ myProfileId }: { myProfileId: string }) {
   return (
@@ -78,6 +78,7 @@ export function Sidebar({ myProfileId }: { myProfileId: string }) {
           },
         ]}
       />
+      <SignOut />
     </>
   );
 }

@@ -86,3 +86,21 @@ export type SearchedUser = {
   username: string;
   _id: string;
 }[];
+
+export type NotificationInfoType = {
+  _id: string;
+  requestType: "follow";
+  status: "pending" | "accepted" | "rejected";
+  sender: string;
+  receiver: string;
+  createdAt: Date;
+  updatedAt: Date;
+  senderInfo: {
+    email: string;
+    username: string;
+    account_Type: "PUBLIC";
+    avatar: { secure_url: string; asset_id: string };
+    isFollowing: boolean;
+    isRequested: boolean;
+  };
+}[];

@@ -6,6 +6,7 @@ import { PostModel } from "@/models/post.model";
 import { postExploreAggregate } from "@/lib/aggregates";
 import { InfiniteExploreScroll } from "./_components/infinite-explore-scroll";
 import { serverSession } from "@/hooks/useServerSession";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 export default async function Page() {
   await dbConnect();
@@ -24,12 +25,16 @@ export default async function Page() {
         Sorry looks like we doesn&apos;t have enough data
       </div>
     );
+  
   else
     return (
-      <div className="h-full w-full p-10">
-        <div className="grid grid-cols-4 gap-4">
-          <InfiniteExploreScroll initialPosts={parsedPosts} />
+      <ScrollArea className="h-[100vh] px-4">
+        <div className="h-full w-full p-10">
+          <div className="grid grid-cols-4 gap-4">
+            <InfiniteExploreScroll initialPosts={parsedPosts} />
+          </div>
         </div>
-      </div>
+        <ScrollBar orientation="vertical" />
+      </ScrollArea>
     );
 }

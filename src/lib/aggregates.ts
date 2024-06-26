@@ -447,4 +447,78 @@ export const profileData = (
       hasRequested: 1,
     },
   },
+  ];
+
+export const notificationAggregate = (
+  currentUserId: string,
+): PipelineStage[] => [
+  {
+    $match: {
+      receiver: new mongoose.Types.ObjectId(currentUserId),
+      status: "pending",
+    },
+  },
+  {
+    $lookup: {
+      from: "users",
+      localField: "sender",
+      foreignField: "_id",
+      as: "senderInfo",
+    },
+  },
+  {
+    $unwind: "$senderInfo",
+  },
+  {
+    $lookup: {
+      from: "requests",
+      let: { senderId: "$sender" },
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $and: [
+                {
+                  $eq: ["$sender", new mongoose.Types.ObjectId(currentUserId)],
+                },
+                { $eq: ["$receiver", "$$senderId"] },
+                { $eq: ["$requestType", "follow"] },
+              ],
+            },
+          },
+        },
+      ],
+      as: "userRequests",
+    },
+  },
+  {
+    $addFields: {
+      "senderInfo.isFollowing": {
+        $in: [
+          new mongoose.Types.ObjectId(currentUserId),
+          { $ifNull: ["$senderInfo.followers", []] },
+        ],
+      },
+      "senderInfo.isRequested": {
+        $gt: [{ $size: "$userRequests" }, 0],
+      },
+    },
+  },
+  {
+    $project: {
+      _id: 1,
+      sender: 1,
+      receiver: 1,
+      status: 1,
+      requestType: 1,
+      createdAt: 1,
+      updatedAt: 1,
+      "senderInfo.username": 1,
+      "senderInfo.email": 1,
+      "senderInfo.avatar": 1,
+      "senderInfo.account_Type": 1,
+      "senderInfo.isFollowing": 1,
+      "senderInfo.isRequested": 1,
+    },
+  },
 ];

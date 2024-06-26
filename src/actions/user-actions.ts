@@ -249,6 +249,7 @@ export async function acceptRequest({
 }): Promise<{
   success: boolean;
   message: string;
+  status: "pending" | "accepted" | "rejected";
 }> {
   await dbConnect();
   const newCurrentUserID = new mongoose.Types.ObjectId(currentUserId);
@@ -267,6 +268,7 @@ export async function acceptRequest({
 
   if (!request) {
     return {
+      status: "pending",
       success: false,
       message: "No pending follow request found or already accepted/rejected.",
     };
@@ -287,12 +289,14 @@ export async function acceptRequest({
 
   if (!currentUserUpdate || !requestorUpdate) {
     return {
+      status: request.status,
       success: false,
       message: "Failed to accept the follow request.",
     };
   }
 
   return {
+    status: request.status,
     success: true,
     message: "Follow request accepted successfully.",
   };
@@ -307,6 +311,7 @@ export async function rejectRequest({
 }): Promise<{
   success: boolean;
   message: string;
+  status: "pending" | "accepted" | "rejected";
 }> {
   await dbConnect();
   const newCurrentUserID = new mongoose.Types.ObjectId(currentUserId);
@@ -325,12 +330,14 @@ export async function rejectRequest({
 
   if (!request) {
     return {
+      status: request.status,
       success: false,
       message: "No pending follow request found or already accepted/rejected.",
     };
   }
 
   return {
+    status: request.status,
     success: true,
     message: "Follow request rejected successfully.",
   };

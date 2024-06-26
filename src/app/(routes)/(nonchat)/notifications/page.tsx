@@ -1,95 +1,46 @@
-import { CheckApi } from "@/components/specific/check-api";
+import { redirect } from "next/navigation";
+
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { serverSession } from "@/hooks/useServerSession";
 import { dbConnect } from "@/lib/dbConnection";
 import { RequestModel } from "@/models/request.model";
-import mongoose from "mongoose";
-import { redirect } from "next/navigation";
+import { RequestNotifications } from "./_components/notification-card";
+import { NotificationInfoType } from "@/types/types";
+import { notificationAggregate } from "@/lib/aggregates";
 
 export default async function Page() {
   await dbConnect();
   const session = await serverSession();
   if (!session || !session.user) return redirect("/auth/sign-in");
-  
-  const notifications = await RequestModel.aggregate([
-    {
-      $match: {
-        receiver: new mongoose.Types.ObjectId(session.user._id),
-        status: "pending",
-      },
-    },
-    {
-      $lookup: {
-        from: "users",
-        localField: "sender",
-        foreignField: "_id",
-        as: "senderInfo",
-      },
-    },
-    {
-      $unwind: "$senderInfo",
-    },
-    {
-      $lookup: {
-        from: "requests",
-        let: { senderId: "$sender" },
-        pipeline: [
-          {
-            $match: {
-              $expr: {
-                $and: [
-                  {
-                    $eq: [
-                      "$sender",
-                      new mongoose.Types.ObjectId(session.user._id),
-                    ],
-                  },
-                  { $eq: ["$receiver", "$$senderId"] },
-                  { $eq: ["$requestType", "follow"] },
-                ],
-              },
-            },
-          },
-        ],
-        as: "userRequests",
-      },
-    },
-    {
-      $addFields: {
-        "senderInfo.isFollowing": {
-          $in: [
-            new mongoose.Types.ObjectId(session.user._id),
-            { $ifNull: ["$senderInfo.followers", []] },
-          ],
-        },
-        "senderInfo.isRequested": {
-          $gt: [{ $size: "$userRequests" }, 0],
-        },
-      },
-    },
-    {
-      $project: {
-        _id: 1,
-        sender: 1,
-        receiver: 1,
-        status: 1,
-        requestType: 1,
-        createdAt: 1,
-        "senderInfo.username": 1,
-        "senderInfo.email": 1,
-        "senderInfo.avatar": 1,
-        "senderInfo.account_Type": 1,
-        "senderInfo.isFollowing": 1,
-        "senderInfo.isRequested": 1,
-      },
-    },
-  ]);
+
+  const requestNotifications = await RequestModel.aggregate(
+    notificationAggregate(session.user._id),
+  );
+
+  const parsedRequestNotification = JSON.parse(
+    JSON.stringify(requestNotifications),
+  ) as NotificationInfoType;
 
   return (
     <div className="h-full w-full">
       <ScrollArea className="h-full w-full p-5">
-        <CheckApi data={notifications} />
-        <div className="h-[90vh] w-full"></div>
+        <div className="h-[90vh] w-full">
+          {parsedRequestNotification &&
+            parsedRequestNotification.length > 0 &&
+            parsedRequestNotification.map((e) => (
+              <RequestNotifications
+                key={e.senderInfo.avatar?.asset_id || e._id}
+                senderID={e.sender}
+                receiverID={e.receiver}
+                senderUsername={e.senderInfo.username}
+                senderAvatar={e.senderInfo.avatar}
+                isFollowing={e.senderInfo.isFollowing}
+                isRequested={e.senderInfo.isRequested}
+                updatedAt={e.updatedAt}
+                status={e.status}
+              />
+            ))}
+        </div>
         <ScrollBar orientation="vertical" />
       </ScrollArea>
     </div>
