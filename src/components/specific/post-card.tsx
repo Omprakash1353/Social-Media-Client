@@ -40,7 +40,6 @@ export function PostCard({ postData }: { postData: IPostStringified }) {
   const { data: session } = useSession();
   const userId = session?.user._id;
 
-  // TODO: this if user has liked or not must come from backend inorder to make it faster
   const [hasLiked, setHasLiked] = useState(() =>
     typeof userId === "string"
       ? Boolean(postData.likes.includes(userId))
@@ -134,12 +133,14 @@ export function PostCard({ postData }: { postData: IPostStringified }) {
   }, [hasLiked, likePostsMutation, dislikePostsMutation, postData._id, userId]);
 
   const pastTime = useMemo(
-    () => getTime(postData?.createdAt),
+    () => getTime(new Date(postData?.createdAt)),
     [postData?.createdAt],
   );
 
+  console.log(postData);
+
   return (
-    <div className="post-card m-5">
+    <div className="post-card m-5 w-[500px]">
       <div className="flex justify-between">
         <div className="flex items-center gap-3">
           <Link href={`/${postData?.user?.username}`}>
@@ -156,7 +157,7 @@ export function PostCard({ postData }: { postData: IPostStringified }) {
               <Link href={`/${postData?.user?.username}`}>
                 {postData?.user?.username}{" "}
               </Link>
-              • <span className="text-sm text-stone-600">{pastTime} ago</span>
+              • <span className="text-sm text-stone-600">{pastTime}</span>
             </p>
 
             <div className="flex-center gap-2">

@@ -1,40 +1,28 @@
 import { clsx, type ClassValue } from "clsx";
+import { Types } from "mongoose";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function getTime(date: string | Date) {
-  const utcTime = new Date(date);
-  const currentTime = Date.now();
-  const timeDiff = currentTime - utcTime.getTime();
+export function getTime(lastOnline: Date): string {
+  const now = new Date();
+  const diff = Math.abs(now.getTime() - lastOnline.getTime());
+  const minutes = Math.floor(diff / (1000 * 60));
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
-  const millisecondsInWeek = 1000 * 60 * 60 * 24 * 7;
-  const weeksDiff = Math.floor(timeDiff / millisecondsInWeek);
-  const daysDiff = Math.floor(
-    (timeDiff % millisecondsInWeek) / (1000 * 60 * 60 * 24),
-  );
-  const hoursDiff = Math.floor(
-    (timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
-  );
-  const minutesDiff = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
-
-  let maxUnit;
-  let maxTimeValue;
-  if (weeksDiff > 0) {
-    maxUnit = "w";
-    maxTimeValue = weeksDiff;
-  } else if (daysDiff > 0) {
-    maxUnit = "d";
-    maxTimeValue = daysDiff;
-  } else if (hoursDiff > 0) {
-    maxUnit = "hr";
-    maxTimeValue = hoursDiff;
+  if (days > 0) {
+    return `${days} day${days > 1 ? "s" : ""} ago`;
+  } else if (hours > 0) {
+    return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+  } else if (minutes > 0) {
+    return `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
   } else {
-    maxUnit = "m";
-    maxTimeValue = minutesDiff;
+    return "just now";
   }
-
-  return `${maxTimeValue} ${maxUnit}`;
 }
+
+export const toObjectId = (id: string): Types.ObjectId =>
+  new Types.ObjectId(id);

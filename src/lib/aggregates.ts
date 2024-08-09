@@ -1,4 +1,4 @@
-import mongoose, { PipelineStage, Types } from "mongoose";
+import { PipelineStage, Types } from "mongoose";
 
 export const postHomeAggregate = (
   page: number,
@@ -62,7 +62,7 @@ export const postHomeAggregate = (
     },
   },
   {
-    $skip: (page - 1) * limit,
+    $skip: (page - 1) * limit < 0 ? 0 : (page - 1) * limit,
   },
   {
     $limit: limit,
@@ -92,6 +92,59 @@ export const postHomeAggregate = (
         avatar: 1,
         account_Type: 1,
       },
+    },
+  },
+];
+
+export const suggestBarAggregate = (
+  userId: Types.ObjectId,
+): PipelineStage[] => [
+  {
+    $match: {
+      _id: { $ne: userId },
+      followers: { $nin: [userId] },
+    },
+  },
+  {
+    $lookup: {
+      from: "requests",
+      let: { userId: "$_id" },
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $and: [
+                {
+                  $eq: ["$sender", userId],
+                },
+                { $eq: ["$receiver", "$$userId"] },
+                { $eq: ["$requestType", "follow"] },
+              ],
+            },
+          },
+        },
+      ],
+      as: "requests",
+    },
+  },
+  {
+    $addFields: {
+      isFollowing: {
+        $in: [userId, { $ifNull: ["$followers", []] }],
+      },
+      isRequested: {
+        $gt: [{ $size: "$requests" }, 0],
+      },
+    },
+  },
+  {
+    $project: {
+      username: 1,
+      email: 1,
+      avatar: 1,
+      account_Type: 1,
+      isFollowing: 1,
+      isRequested: 1,
     },
   },
 ];
@@ -159,7 +212,7 @@ export const profilePostAggregate = (
   page: number,
   limit: number,
   username: string,
-  currentUserId: mongoose.Types.ObjectId,
+  currentUserId: Types.ObjectId,
 ): PipelineStage[] => [
   {
     $lookup: {
@@ -325,7 +378,7 @@ export const profilePostAggregate = (
 
 export const profileData = (
   username: string,
-  currentUserId: mongoose.Types.ObjectId,
+  currentUserId: Types.ObjectId,
 ): PipelineStage[] => [
   {
     $match: {
@@ -447,14 +500,14 @@ export const profileData = (
       hasRequested: 1,
     },
   },
-  ];
+];
 
 export const notificationAggregate = (
-  currentUserId: string,
+  currentUserId: Types.ObjectId,
 ): PipelineStage[] => [
   {
     $match: {
-      receiver: new mongoose.Types.ObjectId(currentUserId),
+      receiver: currentUserId,
       status: "pending",
     },
   },
@@ -479,7 +532,7 @@ export const notificationAggregate = (
             $expr: {
               $and: [
                 {
-                  $eq: ["$sender", new mongoose.Types.ObjectId(currentUserId)],
+                  $eq: ["$sender", currentUserId],
                 },
                 { $eq: ["$receiver", "$$senderId"] },
                 { $eq: ["$requestType", "follow"] },
@@ -494,10 +547,7 @@ export const notificationAggregate = (
   {
     $addFields: {
       "senderInfo.isFollowing": {
-        $in: [
-          new mongoose.Types.ObjectId(currentUserId),
-          { $ifNull: ["$senderInfo.followers", []] },
-        ],
+        $in: [currentUserId, { $ifNull: ["$senderInfo.followers", []] }],
       },
       "senderInfo.isRequested": {
         $gt: [{ $size: "$userRequests" }, 0],
@@ -519,6 +569,199 @@ export const notificationAggregate = (
       "senderInfo.account_Type": 1,
       "senderInfo.isFollowing": 1,
       "senderInfo.isRequested": 1,
+    },
+  },
+];
+
+export const chatDetailsAggregate = (
+  chatObjectId: Types.ObjectId,
+  currentUserObjectId: Types.ObjectId,
+): PipelineStage[] => [
+  { $match: { _id: chatObjectId } },
+  {
+    $lookup: {
+      from: "users",
+      localField: "members",
+      foreignField: "_id",
+      as: "members",
+    },
+  },
+  {
+    $addFields: {
+      formattedName: {
+        $cond: {
+          if: { $eq: ["$groupChat", true] },
+          then: "$name",
+          else: {
+            $arrayElemAt: [
+              {
+                $map: {
+                  input: {
+                    $filter: {
+                      input: "$members",
+                      as: "member",
+                      cond: {
+                        $ne: ["$$member._id", currentUserObjectId],
+                      },
+                    },
+                  },
+                  as: "member",
+                  in: "$$member.username",
+                },
+              },
+              0,
+            ],
+          },
+        },
+      },
+      formattedAvatar: {
+        $cond: {
+          if: { $eq: ["$groupChat", true] },
+          then: {
+            $map: {
+              input: {
+                $filter: {
+                  input: "$members",
+                  as: "member",
+                  cond: {},
+                },
+              },
+              as: "member",
+              in: "$$member.avatar",
+            },
+          },
+          else: {
+            $arrayElemAt: [
+              {
+                $map: {
+                  input: {
+                    $filter: {
+                      input: "$members",
+                      as: "member",
+                      cond: {
+                        $ne: ["$$member._id", currentUserObjectId],
+                      },
+                    },
+                  },
+                  as: "member",
+                  in: "$$member.avatar",
+                },
+              },
+              0,
+            ],
+          },
+        },
+      },
+      memberDetails: {
+        $map: {
+          input: {
+            $filter: {
+              input: "$members",
+              as: "member",
+              cond: {},
+            },
+          },
+          as: "member",
+          in: {
+            _id: "$$member._id",
+            name: "$$member.username",
+            avatar: "$$member.avatar",
+          },
+        },
+      },
+    },
+  },
+  {
+    $project: {
+      name: "$formattedName",
+      avatar: "$formattedAvatar",
+      groupChat: 1,
+      members: "$memberDetails",
+    },
+  },
+];
+
+export const postAggregateById = (
+  postId: Types.ObjectId,
+  currentUserId: Types.ObjectId,
+): PipelineStage[] => [
+  {
+    $match: {
+      _id: postId,
+      post_Type: "POST",
+      isArchived: false,
+    },
+  },
+  {
+    $lookup: {
+      from: "users",
+      let: { postId: "$_id" },
+      pipeline: [
+        { $match: { $expr: { $in: ["$$postId", "$posts"] } } },
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+            email: 1,
+            username: 1,
+            account_Type: 1,
+            avatar: 1,
+            followers: { $ifNull: ["$followers", []] },
+          },
+        },
+      ],
+      as: "user",
+    },
+  },
+  {
+    $unwind: "$user",
+  },
+  {
+    $addFields: {
+      isCurrentUserFollowing: {
+        $cond: {
+          if: {
+            $or: [
+              { $eq: ["$user.account_Type", "PUBLIC"] },
+              { $eq: ["$user._id", currentUserId] },
+            ],
+          },
+          then: true,
+          else: { $in: [currentUserId, "$user.followers"] },
+        },
+      },
+    },
+  },
+  {
+    $match: {
+      isCurrentUserFollowing: true,
+    },
+  },
+  {
+    $project: {
+      post_Type: 1,
+      caption: 1,
+      location: 1,
+      media: 1,
+      hashTags: 1,
+      likes: 1,
+      saved: 1,
+      tagged: 1,
+      isCommentOn: 1,
+      isLikesAndCommentVisible: 1,
+      comments: 1,
+      expiryTime: 1,
+      isArchived: 1,
+      createdAt: 1,
+      updatedAt: 1,
+      user: {
+        _id: 1,
+        name: 1,
+        email: 1,
+        username: 1,
+        avatar: 1,
+        account_Type: 1,
+      },
     },
   },
 ];

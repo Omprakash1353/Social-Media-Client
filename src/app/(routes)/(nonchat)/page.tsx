@@ -1,21 +1,24 @@
-import mongoose from "mongoose";
-
+import { redirect } from "next/navigation";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { serverSession } from "@/hooks/useServerSession";
+import { postHomeAggregate } from "@/lib/aggregates";
 import { dbConnect } from "@/lib/dbConnection";
+import { toObjectId } from "@/lib/utils";
 import { PostModel } from "@/models/post.model";
 import { IPostStringified } from "@/types/types";
 import { PostsScroll } from "../_components/posts";
 import { Stories } from "../_components/stories";
-import { postHomeAggregate } from "@/lib/aggregates";
-import { serverSession } from "@/hooks/useServerSession";
 
 export default async function Page() {
   await dbConnect();
 
   const session = await serverSession();
+  if (!session || !session.user) return redirect("/auth/sign-in");
+
   const posts = await PostModel.aggregate(
-    postHomeAggregate(1, 3, new mongoose.Types.ObjectId(session?.user._id)),
+    postHomeAggregate(1, 3, toObjectId(session?.user._id)),
   );
+
   const ParsedPosts = JSON.parse(JSON.stringify(posts)) as IPostStringified[];
 
   return (

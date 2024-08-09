@@ -104,3 +104,14 @@ export type NotificationInfoType = {
     isRequested: boolean;
   };
 }[];
+
+export type Member = {
+  _id: string;
+  name: string;
+  avatar: { secure_url: string };
+};
+
+export type Message = {
+  type: "sender" | "receiver";
+  message: string;
+} & ({ type: "sender" } | { type: "receiver"; senderName: string });

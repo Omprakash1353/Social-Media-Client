@@ -1,12 +1,12 @@
-import mongoose from "mongoose";
 import { redirect } from "next/navigation";
 
-import { dbConnect } from "@/lib/dbConnection";
-import { PostModel } from "@/models/post.model";
-import { postExploreAggregate } from "@/lib/aggregates";
-import { InfiniteExploreScroll } from "./_components/infinite-explore-scroll";
-import { serverSession } from "@/hooks/useServerSession";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { serverSession } from "@/hooks/useServerSession";
+import { postExploreAggregate } from "@/lib/aggregates";
+import { dbConnect } from "@/lib/dbConnection";
+import { toObjectId } from "@/lib/utils";
+import { PostModel } from "@/models/post.model";
+import { InfiniteExploreScroll } from "./_components/infinite-explore-scroll";
 
 export default async function Page() {
   await dbConnect();
@@ -14,7 +14,7 @@ export default async function Page() {
   if (!session?.user) return redirect("/auth/sign-in");
 
   const posts = await PostModel.aggregate(
-    postExploreAggregate(1, 12, new mongoose.Types.ObjectId(session.user._id)),
+    postExploreAggregate(1, 12, toObjectId(session.user._id)),
   );
 
   const parsedPosts = JSON.parse(JSON.stringify(posts));

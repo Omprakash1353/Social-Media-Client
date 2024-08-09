@@ -2,11 +2,12 @@ import { redirect } from "next/navigation";
 
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { serverSession } from "@/hooks/useServerSession";
-import { dbConnect } from "@/lib/dbConnection";
-import { RequestModel } from "@/models/request.model";
-import { RequestNotifications } from "./_components/notification-card";
-import { NotificationInfoType } from "@/types/types";
 import { notificationAggregate } from "@/lib/aggregates";
+import { dbConnect } from "@/lib/dbConnection";
+import { toObjectId } from "@/lib/utils";
+import { RequestModel } from "@/models/request.model";
+import { NotificationInfoType } from "@/types/types";
+import { RequestNotifications } from "./_components/notification-card";
 
 export default async function Page() {
   await dbConnect();
@@ -14,7 +15,7 @@ export default async function Page() {
   if (!session || !session.user) return redirect("/auth/sign-in");
 
   const requestNotifications = await RequestModel.aggregate(
-    notificationAggregate(session.user._id),
+    notificationAggregate(toObjectId(session.user._id)),
   );
 
   const parsedRequestNotification = JSON.parse(

@@ -1,65 +1,109 @@
-"use client";
+import { serverSession } from "@/hooks/useServerSession";
+import { chatDetailsAggregate } from "@/lib/aggregates";
+import { dbConnect } from "@/lib/dbConnection";
+import { toObjectId } from "@/lib/utils";
+import { ChatModel } from "@/models/chat.model";
+import { Chat } from "../../_components/chat";
+import { MessageModel } from "@/models/message.model";
+import { revalidatePath } from "next/cache";
+import { Member, Message } from "@/types/types";
+import { UserModel } from "@/models/user.model";
 
-import {
-  PaperclipIcon,
-  PhoneIcon,
-  Send,
-  VideoIcon
-} from "lucide-react";
+type MessageQueryType = {
+  content: string;
+  sender: string;
+  attachment: { secure_url: string }[];
+  updatedAt: Date;
+}[];
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+type ChatQueryType = {
+  _id: string;
+  groupChat: boolean;
+  name: string;
+  avatar: { secure_url: string }[] | { secure_url: string };
+  members: { _id: string; name: string; avatar: { secure_url: string } }[];
+};
 
-export default function Page({ params }: { params: { chatId: string } }) {
+export default async function Page({ params }: { params: { chatId: string } }) {
+  await dbConnect();
+  const session = await serverSession();
+  if (!session || !session.user)
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        User unauthorized
+      </div>
+    );
+
+  const [chat, message] = await Promise.all([
+    ChatModel.aggregate(
+      chatDetailsAggregate(
+        toObjectId(params.chatId),
+        toObjectId(session.user._id),
+      ),
+    ),
+    MessageModel.find({ chat: params.chatId })
+      .sort({
+        createdAt: 1,
+      })
+      .select("content sender attachments updatedAt"),
+  ]);
+
+  const parsedChat = JSON.parse(JSON.stringify(chat[0])) as ChatQueryType;
+
+  const parsedMessages = JSON.parse(
+    JSON.stringify(message),
+  ) as MessageQueryType;
+
+  function renderMessages(
+    parsedMessages: MessageQueryType,
+    currentUserId: string,
+    members: Member[],
+  ): Message[] {
+    return parsedMessages.map((msg) => {
+      const isSender = msg.sender === currentUserId;
+      const sender = members.find((member) => member._id === msg.sender);
+
+      return isSender
+        ? { type: "sender", message: msg.content }
+        : {
+            type: "receiver",
+            message: msg.content,
+            senderName: sender?.name || "Unknown",
+          };
+    });
+  }
+
+  let lastOnlineTime: Date | undefined;
+  if (!parsedChat.groupChat) {
+    const user = await UserModel.findOne({ name: parsedChat.name }) as any;
+    if (user && user.lastOnlineTime) lastOnlineTime = user.lastOnlineTime;
+  }
+
+  const renderMessagesArr = renderMessages(
+    parsedMessages,
+    session.user._id,
+    parsedChat.members,
+  );
+
+  if (!parsedChat)
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        Chat Not Found
+      </div>
+    );
+
+  revalidatePath("/chat");
+
   return (
-    <div className="h-full w-full">
-      <div className="flex h-16 w-full items-center gap-x-3 border-b-2 px-5">
-        <Avatar>
-          <AvatarImage src="https://github.com/shadcn.png" />
-          <AvatarFallback>CN</AvatarFallback>
-        </Avatar>
-        <div className="grow">
-          <div>NAME</div>
-          <p className="text-sm text-muted-foreground">09:00 am</p>
-        </div>
-        <div className="flex gap-x-2">
-          <Button>
-            <PhoneIcon />
-          </Button>
-          <Button>
-            <VideoIcon />
-          </Button>
-        </div>
-      </div>
-      <ScrollArea className="h-[80vh] px-4">
-        <div className="flex w-full flex-col gap-y-2 py-2">
-          {/* Receiver */}
-          <div className="w-fit self-end rounded-bl-md rounded-tl-md rounded-tr-md bg-primary-foreground p-2">
-            How are you ?
-          </div>
-          {/* Sender */}
-          <div className="w-fit self-start rounded-br-md rounded-tl-md rounded-tr-md bg-muted-foreground p-2">
-            How are you ?
-          </div>
-        </div>
-        <ScrollBar orientation="vertical" />
-      </ScrollArea>
-      <div className="mb-1 flex w-full items-center border-t-2 px-1">
-        <form className="flex h-16 w-full items-center gap-x-2">
-          <Button variant={"ghost"} className="h-12">
-            <PaperclipIcon />
-          </Button>
-          <Input
-            className="h-2/3 grow border-transparent outline-none"
-            placeholder="Type your message..."
-          />
-          <Button variant={"ghost"} className="h-12">
-            <Send className="h-6 w-6" />
-          </Button>
-        </form>
-      </div>
-    </div>
+    <Chat
+      currentUserId={session.user._id}
+      chatId={parsedChat._id}
+      username={parsedChat.name}
+      avatar={parsedChat?.avatar}
+      members={parsedChat?.members}
+      groupChat={parsedChat.groupChat}
+      initialMessages={renderMessagesArr}
+      lastOnlineTime={lastOnlineTime}
+    />
   );
 }

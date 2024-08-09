@@ -8,6 +8,8 @@ import AuthProvider from "@/context/auth-provider";
 import { ThemeProvider } from "@/context/theme-provider";
 // import { SocketProvider } from "@/context/socket-provider";
 import { QueryProvider } from "@/context/query-provider";
+import { SocketProvider } from "@/context/socket-provider";
+import { ReduxProvider } from "@/context/redux-provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,19 +27,23 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <NextTopLoader color="red" showSpinner={false} speed={200} />
-        <AuthProvider>
-          <QueryProvider>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-              disableTransitionOnChange
-            >
-              {children}
-              <Toaster />
-            </ThemeProvider>
-          </QueryProvider>
-        </AuthProvider>
+        <ReduxProvider>
+          <AuthProvider>
+            <QueryProvider>
+              <SocketProvider>
+                <ThemeProvider
+                  attribute="class"
+                  defaultTheme="system"
+                  enableSystem
+                  disableTransitionOnChange
+                >
+                  {children}
+                  <Toaster />
+                </ThemeProvider>
+              </SocketProvider>
+            </QueryProvider>
+          </AuthProvider>
+        </ReduxProvider>
       </body>
     </html>
   );

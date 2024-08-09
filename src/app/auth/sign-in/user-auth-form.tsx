@@ -43,7 +43,7 @@ export function UserAuthForm({
 		}
 
 		toast.success("Signed In successfully");
-		router.push(callbackUrl || "/");
+		router.push("/");
 	};
 
 	return (

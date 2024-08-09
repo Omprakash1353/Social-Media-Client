@@ -9,6 +9,7 @@ import { useInView } from "react-intersection-observer";
 import { fetchMoreProfilePosts } from "@/actions/post-actions";
 import { Icons } from "@/components/shared/icons";
 import { InfiniteProfilePostsType } from "@/types/types";
+import { PostDialog } from "@/components/specific/post-dialog";
 
 export function InfiniteProfilePostScroll({
   initialPosts,
@@ -58,23 +59,24 @@ export function InfiniteProfilePostScroll({
           (column, idx) => (
             <div key={idx} className="flex flex-col gap-4">
               {column.map((e) => (
-                <Link
-                  key={e.media.asset_id}
-                  href={"#"}
-                  className="rounded-md bg-muted"
-                >
-                  <Image
-                    key={e.media.asset_id}
-                    src={e.media.secure_url}
-                    placeholder="blur"
-                    blurDataURL={e.media.blur_url}
-                    sizes="100vw"
-                    alt="image"
-                    height={300}
-                    width={500}
-                    className="rounded-md"
-                  />
-                </Link>
+                <PostDialog key={e._id} _id={e._id} media={e.media} />
+                // <Link
+                //   key={e.media.asset_id}
+                //   href={`/p/${e._id}`}
+                //   className="rounded-md bg-muted"
+                // >
+                //   <Image
+                //     key={e.media.asset_id}
+                //     src={e.media.secure_url}
+                //     placeholder="blur"
+                //     blurDataURL={e.media.blur_url}
+                //     sizes="100vw"
+                //     alt="image"
+                //     height={300}
+                //     width={500}
+                //     className="rounded-md"
+                //   />
+                // </Link>
               ))}
             </div>
           ),

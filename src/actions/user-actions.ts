@@ -6,8 +6,9 @@ import { dbConnect } from "@/lib/dbConnection";
 import { RequestModel } from "@/models/request.model";
 import { UserModel } from "@/models/user.model";
 import { UploadImage } from "@/services/cloudinary";
-import { ObjectType, SearchedUser, UserCardType } from "@/types/types";
+import { ObjectType, SearchedUser } from "@/types/types";
 import mongoose from "mongoose";
+import { createOrRetrieveChat } from "./chat-actions";
 
 export async function changeUserAccountType(e: boolean): Promise<{
   _id: string | ObjectType;
@@ -90,12 +91,25 @@ export async function editUserData(formData: FormData) {
 
 export async function getSearchedUsers(
   searchUsers: string,
+  excludeUsers: string[] = [],
 ): Promise<SearchedUser> {
   const regex = new RegExp(searchUsers, "i");
   await dbConnect();
-  const results = await UserModel.find({ name: { $regex: regex } }).select(
-    "avatar username",
+  const session = await serverSession();
+  if (!session || !session.user) return [];
+  if (!excludeUsers.some((m) => m === session.user._id)) {
+    excludeUsers.push(session.user._id);
+  }
+
+  const excludeUserIds = excludeUsers.map(
+    (id) => new mongoose.Types.ObjectId(id),
   );
+
+  const results = await UserModel.find({
+    name: { $regex: regex },
+    _id: { $nin: excludeUserIds },
+  }).select("avatar username");
+
   return results.length ? JSON.parse(JSON.stringify(results)) : [];
 }
 
@@ -183,6 +197,11 @@ export async function followUser({
         receiver: userToFollow,
       });
     }
+
+    await createOrRetrieveChat({
+      userId1: currentUserId,
+      userId2: userId,
+    });
 
     return {
       isFollowing: true,
@@ -294,6 +313,11 @@ export async function acceptRequest({
       message: "Failed to accept the follow request.",
     };
   }
+
+  await createOrRetrieveChat({
+    userId1: currentUserId,
+    userId2: userId,
+  });
 
   return {
     status: request.status,

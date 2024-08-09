@@ -21,3 +21,18 @@ export async function UploadImage(file: File, folder: string) {
       .end(bytes);
   });
 }
+
+export async function DeleteImage(public_id: string) {
+  return new Promise(async (resolve, reject) => {
+    await cloudinary.uploader.destroy(
+      public_id,
+      { resource_type: "auto" },
+      async (err, res) => {
+        if (err) {
+          reject(err.message);
+        }
+        resolve(res);
+      },
+    );
+  });
+}

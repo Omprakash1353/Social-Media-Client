@@ -15,7 +15,6 @@ import { SignOut } from "../specific/logout";
 export function Sidebar({ myProfileId }: { myProfileId: string }) {
   return (
     <>
-      {" "}
       <div className={"flex h-[52px] items-center justify-center px-2"}>
         <h1></h1>
       </div>

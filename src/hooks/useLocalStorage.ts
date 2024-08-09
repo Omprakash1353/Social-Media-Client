@@ -58,3 +58,15 @@ export function getLocalStorageValue<T>(key: string): T | { error: string } {
     return { error: getErrorMessage(err) };
   }
 }
+
+export const getOrSaveFromStorage = ({ key, get }: { key: string; get: boolean }) => {
+  if (get) {
+    const value =
+      getLocalStorageValue<{ chatId: string; count: number }[]>(key);
+    return Array.isArray(value) ? value : [];
+  } else {
+    const defaultValue = [{ chatId: "", count: 0 }];
+    localStorage.setItem(key, JSON.stringify(defaultValue));
+    return defaultValue;
+  }
+};

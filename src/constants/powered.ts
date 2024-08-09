@@ -6,4 +6,5 @@ const poweredArray = [
   { name: "Express" },
   { name: "NodeJS" },
   { name: "ShadcnUI" },
+  { name: "Javascript" },
 ];

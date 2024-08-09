@@ -8,12 +8,12 @@ import { DOMAIN_NAME } from "@/constants/config";
 import { serverSession } from "@/hooks/useServerSession";
 import { profileData } from "@/lib/aggregates";
 import { dbConnect } from "@/lib/dbConnection";
+import { toObjectId } from "@/lib/utils";
 import { UserModel } from "@/models/user.model";
 import { UserCardType } from "@/types/types";
+import { redirect } from "next/navigation";
 import { ProfileActions } from "../_components/profile-actions";
 import { ProfileTabs } from "../_components/profile-tabs";
-import { redirect } from "next/navigation";
-import mongoose from "mongoose";
 
 export default async function Layout({
   children,
@@ -33,7 +33,7 @@ export default async function Layout({
   );
 
   const userData = await UserModel.aggregate(
-    profileData(params.userId, new mongoose.Types.ObjectId(session.user._id)),
+    profileData(params.userId, toObjectId(session.user._id)),
   );
 
   const parsedUser = JSON.parse(JSON.stringify(user));

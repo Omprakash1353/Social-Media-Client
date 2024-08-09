@@ -2,13 +2,14 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { serverSession } from "@/hooks/useServerSession";
+import { suggestBarAggregate } from "@/lib/aggregates";
 import { dbConnect } from "@/lib/dbConnection";
+import { toObjectId } from "@/lib/utils";
 import { UserModel } from "@/models/user.model";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Separator } from "../ui/separator";
 import { FollowButton } from "./follow-button";
-import mongoose from "mongoose";
 
 export async function SuggestionBar() {
   const session = await serverSession();
@@ -16,62 +17,10 @@ export async function SuggestionBar() {
 
   await dbConnect();
 
-  const users = await UserModel.aggregate([
-    {
-      $match: {
-        _id: { $ne: new mongoose.Types.ObjectId(session.user._id) },
-        followers: { $nin: [new mongoose.Types.ObjectId(session.user._id)] },
-      },
-    },
-    {
-      $lookup: {
-        from: "requests",
-        let: { userId: "$_id" },
-        pipeline: [
-          {
-            $match: {
-              $expr: {
-                $and: [
-                  {
-                    $eq: [
-                      "$sender",
-                      new mongoose.Types.ObjectId(session.user._id),
-                    ],
-                  },
-                  { $eq: ["$receiver", "$$userId"] },
-                  { $eq: ["$requestType", "follow"] },
-                ],
-              },
-            },
-          },
-        ],
-        as: "requests",
-      },
-    },
-    {
-      $addFields: {
-        isFollowing: {
-          $in: [
-            new mongoose.Types.ObjectId(session.user._id),
-            { $ifNull: ["$followers", []] },
-          ],
-        },
-        isRequested: {
-          $gt: [{ $size: "$requests" }, 0],
-        },
-      },
-    },
-    {
-      $project: {
-        username: 1,
-        email: 1,
-        avatar: 1,
-        account_Type: 1,
-        isFollowing: 1,
-        isRequested: 1,
-      },
-    },
-  ]);
+  const users = await UserModel.aggregate(
+    suggestBarAggregate(toObjectId(session.user._id)),
+  );
+
   const parsedUser = JSON.parse(JSON.stringify(users)) as {
     _id: string;
     username: string;
@@ -108,9 +57,9 @@ export async function SuggestionBar() {
         </div>
         <Separator className="my-4" />
         <div className="space-y-4">
-          <h4 className="text-sm font-medium">People you may know</h4>
+          {parsedUser.length > 0 && <h4 className="text-sm font-medium">People you may know</h4>}
           <div className="grid gap-6">
-            {parsedUser.length &&
+            {parsedUser.length > 0 &&
               parsedUser.map((e) => (
                 <div
                   className="flex items-center justify-between"

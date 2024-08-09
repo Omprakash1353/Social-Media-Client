@@ -21,6 +21,7 @@ export interface User extends Document {
   followings?: (mongoose.Types.ObjectId | string)[];
   posts?: (mongoose.Types.ObjectId | string)[];
   searchHistory?: string[];
+  lastOnlineTime: Date;
 }
 
 const schema = new Schema(
@@ -72,6 +73,7 @@ const schema = new Schema(
     searchHistory: [{ type: String }],
     followers: [{ type: mongoose.Types.ObjectId, ref: "User" }],
     followings: [{ type: mongoose.Types.ObjectId, ref: "User" }],
+    lastOnlineTime: Date,
   },
   {
     timestamps: true,

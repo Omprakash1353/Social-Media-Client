@@ -1,22 +1,30 @@
 "use client";
 
-import React, { createContext, useMemo, useContext, ReactNode } from "react";
-import { io, Socket } from "socket.io-client";
+import React, {
+  ReactNode,
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { Socket } from "socket.io-client";
 
-import { socket_server } from "@/constants/config";
+import { socket } from "@/services/socket";
 
 interface SocketContextValue {
   socket: Socket;
+  isConnected: boolean;
+  transport: string;
 }
 
 const SocketContext = createContext<SocketContextValue | undefined>(undefined);
 
-const useSocket = (): Socket => {
+const useSocket = (): SocketContextValue => {
   const context = useContext(SocketContext);
   if (!context) {
     throw new Error("useSocket must be used within a SocketProvider");
   }
-  return context.socket;
+  return context;
 };
 
 interface SocketProviderProps {
@@ -24,16 +32,35 @@ interface SocketProviderProps {
 }
 
 const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
-  const socket = useMemo(
-    () =>
-      io(socket_server!, {
-        withCredentials: true,
-      }),
-    [],
-  );
+  const [isConnected, setIsConnected] = useState(false);
+  const [transport, setTransport] = useState("N/A");
+
+  useEffect(() => {
+    const onConnect = () => {
+      setIsConnected(true);
+      setTransport(socket.io.engine.transport.name);
+
+      socket.io.engine.on("upgrade", (transport) => {
+        setTransport(transport.name);
+      });
+    };
+
+    const onDisconnect = () => {
+      setIsConnected(false);
+      setTransport("N/A");
+    };
+
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+
+    return () => {
+      socket.off("connect", onConnect);
+      socket.off("disconnect", onDisconnect);
+    };
+  }, []);
 
   return (
-    <SocketContext.Provider value={{ socket }}>
+    <SocketContext.Provider value={{ socket, isConnected, transport }}>
       {children}
     </SocketContext.Provider>
   );

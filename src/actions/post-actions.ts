@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import { getErrorMessage } from "@/helpers/errorMessageHandler";
 import { serverSession } from "@/hooks/useServerSession";
 import {
+  postAggregateById,
   postExploreAggregate,
   postHomeAggregate,
   profilePostAggregate,
@@ -21,6 +22,7 @@ import {
   PostReactionType,
   ProfilePostsType,
 } from "@/types/types";
+import { toObjectId } from "@/lib/utils";
 
 export async function createPostAction(formData: FormData) {
   try {
@@ -132,7 +134,7 @@ export async function createPostAction(formData: FormData) {
 }
 
 export async function fetchMoreHomePosts({
-  page = 1,
+  page = 0,
 }: {
   page?: number;
 }): Promise<IPostStringified[] | []> {
@@ -192,14 +194,14 @@ export async function fetchMoreProfilePosts({
   const user = await UserModel.findById(session?.user._id);
   if (!user) return [];
 
-  const posts = await PostModel.aggregate(
+  const posts = (await PostModel.aggregate(
     profilePostAggregate(
       page,
       16,
       userId,
       new mongoose.Types.ObjectId(session.user._id),
     ),
-  ) as ProfilePostsType;
+  )) as ProfilePostsType;
 
   return posts.length ? JSON.parse(JSON.stringify(posts[0].posts)) : [];
 }
@@ -225,7 +227,7 @@ export async function likePostsAction({ post_id, user_id }: PostReactionType) {
     return post.likes?.length ? JSON.parse(JSON.stringify(post.likes)) : [];
   } catch (error) {
     console.error("Error liking/unliking post:", error);
-    throw error;
+    return [];
   }
 }
 
@@ -251,6 +253,17 @@ export async function dislikePostsAction({
     return post.likes?.length ? JSON.parse(JSON.stringify(post.likes)) : [];
   } catch (error) {
     console.error("Error liking/unliking post:", error);
-    throw error;
+    return [];
   }
+}
+
+export async function getPostByID(postId: string) {
+  await dbConnect();
+  const session = await serverSession();
+  if (!session || !session.user) throw new Error("Unauthorized user");
+  const post = await PostModel.aggregate(
+    postAggregateById(toObjectId(postId), toObjectId(session.user._id)),
+  );
+  console.log(post);
+  return post.length ? JSON.parse(JSON.stringify(post[0])) : [];
 }
